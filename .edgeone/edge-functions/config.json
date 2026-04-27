@@ -1,0 +1,11 @@
+{
+  "routes": [
+    {
+      "src": "^/jdjygoldapi/api$"
+    },
+    {
+      "src": "^/jdjygoldapi/(.*)$"
+    }
+  ],
+  "middleware": null
+}
