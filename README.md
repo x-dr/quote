@@ -1,16 +1,73 @@
-# React + Vite
+# Quote
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+基于 React + Vite + Ant Design 的行情看板项目，当前主模块为黄金行情。
 
-Currently, two official plugins are available:
+## 功能概览
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 黄金模块：实时快照、分时/日K/分钟K、投机情绪、ETF 与央行储备数据图表
+- WebSocket 实时推送：行情状态展示与重连
+- REST + 轮询：首屏快照 + 增量合并
+- 模块化扩展：股票/白银/汇率入口已预留（规划中）
 
-## React Compiler
+## 项目文档
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- API 文档：`docs/API.md`
 
-## Expanding the ESLint configuration
+## 快速开始
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1. 安装依赖
+
+```bash
+npm install
+```
+
+### 2. 本地开发
+
+```bash
+npm run dev
+```
+
+默认监听 `0.0.0.0`，便于局域网设备访问。
+
+### 3. 构建与预览
+
+```bash
+npm run build
+npm run preview
+```
+
+### 4. 代码检查
+
+```bash
+npm run lint
+```
+
+## 目录结构
+
+```txt
+src/
+	config/         # 接口与环境配置
+	modules/        # 业务模块（gold/coming-soon）
+	services/       # HTTP/WS/网关 API 封装
+	assets/         # 静态资源
+```
+
+## 接口与数据源说明
+
+- REST 网关 API 在 `src/config/api.js` 配置
+- 当前默认通过本地代理访问：
+	- `BASE_API`: `http://127.0.0.1:3000/api/jdjy`
+	- `STOCK_API`: `http://127.0.0.1:3000/proxy`
+- 黄金实时 WS：`wss://cfws.jdjygold.com/data`
+
+## 技术栈
+
+- React 19
+- Vite 8
+- Ant Design 6
+- ESLint 10
+
+## 后续建议
+
+- 若新增接口，请同步更新 `src/services/quoteApi.js` 与 `docs/API.md`
+- 若新增业务模块，请在 `src/modules/registry.js` 注册
