@@ -2,10 +2,10 @@
 // export const STRATEGY_API_URL = 'https://api.jdjygold.com'
 // export const VITE_HOME_FEED_API = 'https://api.jdjygold.com'
 // export const STOCK_API = 'https://quoteapi.jd.com'
-export const BASE_API = 'https://jdjyapi.tryxd.cn'
-export const STRATEGY_API_URL = 'https://jdjyapi.tryxd.cn'
-export const VITE_HOME_FEED_API = 'https://jdjyapi.tryxd.cn'
-export const STOCK_API = 'https://jdjyapi.tryxd.cn'
+export const BASE_API = '/api'
+export const STRATEGY_API_URL = '/api'
+export const VITE_HOME_FEED_API = '/api'
+export const STOCK_API = '/api'
 
 export const GOLD_WS_API = 'wss://cfws.jdjygold.com/data'
 
