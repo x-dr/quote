@@ -31,9 +31,9 @@ function App() {
 
       <div className="mobile-shell">
         <header className="mobile-header">
-          <Typography.Text className="mobile-brand">Quote Forge</Typography.Text>
+          {/* <Typography.Text className="mobile-brand">Quote Forge</Typography.Text> */}
           <Typography.Title level={3} className="mobile-title">
-            {activeModule.title} 行情
+            {activeModule.title} 
           </Typography.Title>
           <Typography.Text type="secondary" className="mobile-subtitle">
             {activeModule.subtitle}

@@ -58,8 +58,23 @@ export const getHistoryETFSpreads = (params) =>
     verifyResponse: false,
   })
 
+export const getGoldETFChange = (params) =>
+  gwPost(`${BASE_API}/getGoldETFChange`, params, {
+    verifyResponse: false,
+  })
+
+export const getMsHistoryETFSpreads = (params) =>
+  gwPost(`${BASE_API}/getMsHistoryETFSpreads`, params, {
+    verifyResponse: false,
+  })
+
 export const getHistoryGoldCentralBankReserve = (params) =>
   gwPost(`${BASE_API}/getHistoryGoldCentralBankReserve`, params, {
+    verifyResponse: false,
+  })
+
+export const getGoldCentralBankChange = (params) =>
+  gwPost(`${BASE_API}/getGoldCentralBankChange`, params, {
     verifyResponse: false,
   })
 // import {

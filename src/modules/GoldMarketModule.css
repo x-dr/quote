@@ -476,6 +476,23 @@
   font-size: 16px;
 }
 
+.data-panel-detail-action {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.data-panel-detail-action:hover {
+  color: var(--theme_brand-primary);
+}
+
+.data-panel-detail-action:focus-visible {
+  outline: 2px solid rgba(239, 133, 58, 0.35);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .data-panel-select-row {
   display: flex;
   gap: 10px;
@@ -592,6 +609,405 @@
   font-size: 14px;
   padding: 0 4px;
   margin-top: -2px;
+}
+
+.reserve-detail-drawer .ant-drawer-body {
+  padding: 12px 14px 16px;
+  background: var(--theme_surface-primary);
+}
+
+.etf-detail-drawer .ant-drawer-body {
+  padding: 12px 14px 16px;
+  background: var(--theme_surface-primary);
+  overflow-x: hidden;
+}
+
+.etf-detail-drawer .reserve-detail-title.ant-typography {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.etf-detail-drawer .reserve-detail-label {
+  font-size: 15px;
+  color: #8f939c;
+}
+
+.etf-detail-drawer .reserve-detail-value {
+  font-size: 64px;
+  color: #cd7a35;
+  letter-spacing: -0.4px;
+}
+
+.etf-detail-drawer .reserve-detail-update {
+  font-size: 14px;
+  margin-top: 0;
+}
+
+.etf-detail-drawer .reserve-detail-section-title {
+  font-size: 18px;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.etf-summary-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.etf-publisher-pill {
+  border-radius: 999px;
+  background: #ededf2;
+  padding: 9px 16px;
+  font-size: 13px;
+  color: #9da1ab;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.etf-publisher-pill em {
+  font-style: normal;
+  color: var(--theme_text-primary);
+  font-weight: 600;
+}
+
+.etf-section-divider {
+  height: 10px;
+  background: #f0f0f5;
+  margin: 10px -14px 8px;
+}
+
+.etf-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.etf-title-row .reserve-detail-section-title {
+  margin: 0;
+}
+
+.reserve-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.reserve-detail-title.ant-typography {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.reserve-detail-select-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
+
+.reserve-detail-summary {
+  margin-top: 6px;
+}
+
+.reserve-detail-label {
+  color: var(--theme_text-weak);
+  font-size: 17px;
+}
+
+.reserve-detail-value-row {
+  margin-top: 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.reserve-detail-value {
+  color: var(--theme_brand-primary);
+  font-size: 62px;
+  line-height: 1;
+  letter-spacing: -0.8px;
+  font-weight: 600;
+}
+
+.reserve-detail-value-row em {
+  font-style: normal;
+  color: #ff655f;
+  font-size: 15px;
+  border: 1px solid #ff8b86;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.reserve-detail-update {
+  color: var(--theme_text-weak);
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+.reserve-detail-section-title {
+  margin-top: 12px;
+  margin-bottom: 6px;
+  color: var(--theme_text-primary);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.reserve-detail-chart-shell {
+  margin-bottom: 8px;
+}
+
+.reserve-change-title {
+  margin-top: 10px;
+}
+
+.etf-detail-drawer .reserve-change-title {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.25;
+}
+
+.reserve-change-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.reserve-change-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reserve-change-label {
+  width: 76px;
+  color: var(--theme_text-weak);
+  font-size: 16px;
+  flex: 0 0 auto;
+}
+
+.reserve-change-metrics {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.reserve-change-bar {
+  height: 16px;
+  border-radius: 3px;
+  background: #cfd4df;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.reserve-change-bar.up {
+  background: #ff4349;
+}
+
+.reserve-change-bar.down {
+  background: #1ea780;
+}
+
+.reserve-change-value {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reserve-change-value.up {
+  color: #ff4349;
+}
+
+.reserve-change-value.down {
+  color: #1ea780;
+}
+
+.reserve-change-value.flat {
+  color: var(--theme_text-weak);
+}
+
+.reserve-change-empty {
+  color: var(--theme_text-weak);
+  font-size: 15px;
+  padding: 4px 0;
+}
+
+.reserve-load-more-btn {
+  margin-top: 4px;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  height: 56px;
+  font-size: 16px;
+  color: #8f9196;
+  background: #ececf2;
+  cursor: pointer;
+}
+
+.reserve-load-more-btn:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.etf-change-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
+  overflow-x: hidden;
+}
+
+.etf-change-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etf-change-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.etf-change-date {
+  color: #b4b5b7;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.etf-change-track {
+  position: relative;
+  height: 32px;
+  overflow: visible;
+}
+
+.etf-change-zero-axis {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: #d9d9dc;
+  transform: translateX(-0.5px);
+}
+
+.etf-change-bar {
+  position: absolute;
+  top: 9px;
+  height: 14px;
+  border-radius: 0;
+}
+
+.etf-change-bar.up {
+  background: #ff3d45;
+}
+
+.etf-change-bar.down {
+  background: #38a58b;
+}
+
+.etf-change-bar.flat,
+.etf-change-bar.zero {
+  background: #cfd1d6;
+}
+
+.etf-change-value {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.etf-change-value.up {
+  color: #ff3d45;
+}
+
+.etf-change-value.up.edge-right {
+  transform: translateY(-50%);
+  text-align: right;
+  background: var(--theme_surface-primary);
+  padding-left: 4px;
+}
+
+.etf-change-value.down {
+  color: #38a58b;
+  transform: translate(calc(-100% - 2px), -50%);
+}
+
+.etf-change-value.down.edge-left {
+  transform: translate(4px, -50%);
+  background: var(--theme_surface-primary);
+  padding-right: 4px;
+}
+
+.etf-change-value.zero,
+.etf-change-value.flat {
+  color: #222;
+  transform: translateY(-50%);
+}
+
+.etf-change-axis {
+  border-top: 1px solid #e4e5e7;
+  padding-top: 8px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.etf-axis-badge {
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.etf-axis-badge.down {
+  color: #38a58b;
+  background: rgba(56, 165, 139, 0.12);
+}
+
+.etf-axis-badge.up {
+  color: #ff3d45;
+  background: rgba(255, 61, 69, 0.1);
+}
+
+.etf-axis-ticks {
+  display: flex;
+  justify-content: space-between;
+  color: #acadb0;
+  font-size: 13px;
+}
+
+.etf-load-more-btn {
+  margin-top: 4px;
+  border: none;
+  border-radius: 10px;
+  height: 56px;
+  font-size: 16px;
+  color: #8f9196;
+  background: #ececf2;
+  cursor: pointer;
+}
+
+.etf-load-more-btn:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
 }
 
 @media (max-width: 760px) {
@@ -719,6 +1135,74 @@
 
   .data-axis-labels {
     font-size: 12px;
+  }
+
+  .reserve-detail-select-row {
+    flex-wrap: wrap;
+  }
+
+  .reserve-detail-title.ant-typography {
+    font-size: 22px;
+  }
+
+  .reserve-detail-value {
+    font-size: 56px;
+  }
+
+  .etf-detail-drawer .reserve-detail-value {
+    font-size: 52px;
+  }
+
+  .etf-summary-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .etf-publisher-pill {
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+
+  .etf-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .etf-detail-drawer .reserve-change-title {
+    font-size: 17px;
+  }
+
+  .reserve-change-label {
+    width: 70px;
+    font-size: 15px;
+  }
+
+  .reserve-change-value {
+    font-size: 15px;
+  }
+
+  .etf-change-row {
+    grid-template-columns: 94px 1fr;
+    gap: 8px;
+  }
+
+  .etf-change-date {
+    font-size: 13px;
+  }
+
+  .etf-change-value {
+    font-size: 15px;
+  }
+
+  .etf-axis-ticks {
+    font-size: 11px;
+  }
+
+  .etf-load-more-btn {
+    height: 52px;
+    font-size: 16px;
   }
 
   .sentiment-image {
