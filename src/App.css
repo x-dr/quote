@@ -1,0 +1,83 @@
+.app-shell {
+  min-height: 100vh;
+  position: relative;
+  padding: 18px 12px;
+}
+
+.ambient-shape {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(18px);
+}
+
+.shape-1 {
+  width: 420px;
+  height: 420px;
+  top: -160px;
+  right: -150px;
+  background: rgba(255, 152, 82, 0.25);
+}
+
+.shape-2 {
+  width: 320px;
+  height: 320px;
+  left: -80px;
+  bottom: -60px;
+  background: rgba(239, 207, 131, 0.3);
+}
+
+.mobile-shell {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(235, 235, 240, 0.92);
+  border: 1px solid rgba(220, 214, 205, 0.9);
+  box-shadow: 0 18px 50px rgba(73, 58, 28, 0.16);
+}
+
+.mobile-header {
+  padding: 14px 14px 10px;
+  background: linear-gradient(180deg, rgba(249, 223, 196, 0.45), rgba(235, 235, 240, 0));
+}
+
+.mobile-brand {
+  display: block;
+  font-size: 13px;
+  color: #8f7a5d;
+  margin-bottom: 2px;
+}
+
+.mobile-subtitle {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.module-switch {
+  width: 100%;
+}
+
+.module-switch .ant-segmented-item-selected {
+  background: #ffffff;
+  color: #2e2e2e;
+}
+
+.mobile-content {
+  padding: 10px;
+}
+
+@media (max-width: 992px) {
+  .app-shell {
+    padding: 10px;
+  }
+
+  .mobile-shell {
+    border-radius: 16px;
+  }
+}

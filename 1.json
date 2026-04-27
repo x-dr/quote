@@ -1,0 +1,52 @@
+{
+    "bizType": "2",
+    "data": {
+        "raisePercent": "+0.10%",
+        "high": "1040.37",
+        "preClose": "1035.45",
+        "uniqueCode": "WG-JDAU",
+        "low": "1029.14",
+        "raise": "1.06",
+        "tradeDateTime": "2026-04-27 16:46:36",
+        "open": "1035.45",
+        "lastPrice": "1036.51"
+    },
+    "key": "WG-JDAU",
+    "tickTime": "1777279598000",
+    "time": "1777279598112"
+}
+{
+    "bizType": "2",
+    "data": {
+        "raisePercent": "+0.01%",
+        "high": "4730.08",
+        "preClose": "4707.26",
+        "uniqueCode": "WG-XAUUSD",
+        "low": "4672.25",
+        "raise": "0.58",
+        "tradeDateTime": "2026-04-27 16:39:12",
+        "open": "4702.14",
+        "lastPrice": "4707.84"
+    },
+    "key": "WG-XAUUSD",
+    "tickTime": "1777279154000",
+    "time": "1777279153040"
+}
+
+{
+    "bizType": "2",
+    "data": {
+        "raisePercent": "+0.36%",
+        "high": "1044.00",
+        "preClose": "1033.25",
+        "uniqueCode": "SGE-Au99.99",
+        "low": "1033.00",
+        "raise": "3.77",
+        "tradeDateTime": "2026-04-27 15:45:00",
+        "open": "1039.90",
+        "lastPrice": "1037.02"
+    },
+    "key": "SGE-Au99.99",
+    "tickTime": "1777279154000",
+    "time": "1777279154085"
+}

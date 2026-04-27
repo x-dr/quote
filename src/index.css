@@ -1,0 +1,34 @@
+:root {
+  --brand-bg: #f7efde;
+  --brand-bg-2: #fff8e8;
+  --brand-text: #33270f;
+  --brand-muted: #796b4f;
+  --font-main: 'Avenir Next', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-title: 'Trebuchet MS', 'Noto Sans SC', 'PingFang SC', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  color: var(--brand-text);
+  background: linear-gradient(140deg, var(--brand-bg), var(--brand-bg-2));
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-title);
+}
