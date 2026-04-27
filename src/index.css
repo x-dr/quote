@@ -1,10 +1,42 @@
 :root {
-  --brand-bg: #f7efde;
-  --brand-bg-2: #fff8e8;
-  --brand-text: #33270f;
-  --brand-muted: #796b4f;
-  --font-main: 'Avenir Next', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-title: 'Trebuchet MS', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --theme_text-primary: #181d26;
+  --theme_text-weak: rgba(4, 14, 32, 0.69);
+  --theme_text-secondary-active: rgba(7, 12, 20, 0.82);
+
+  --theme_surface-primary: #ffffff;
+  --theme_surface-light: #f8fafc;
+  --theme_button-text-spotlight: rgba(249, 252, 255, 0.97);
+
+  --theme_brand-primary: #1b61c9;
+  --theme_brand-link: #254fad;
+
+  --theme_success-text: #006400;
+  --theme_border-default: #e0e2e6;
+
+  --theme_shadow-blue: rgba(0, 0, 0, 0.32) 0px 0px 1px,
+    rgba(0, 0, 0, 0.08) 0px 0px 2px,
+    rgba(45, 127, 249, 0.28) 0px 1px 3px,
+    rgba(0, 0, 0, 0.06) 0px 0px 0px 0.5px inset;
+  --theme_shadow-soft: rgba(15, 48, 106, 0.05) 0px 0px 20px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+
+  --radius-sm: 2px;
+  --radius-button: 12px;
+  --radius-card: 16px;
+  --radius-section: 24px;
+  --radius-lg: 32px;
+  --radius-circle: 50%;
+
+  --font-primary: 'Haas', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Haas Groot Disp', 'Haas', -apple-system, system-ui, sans-serif;
 }
 
 * {
@@ -19,9 +51,16 @@ body,
 }
 
 body {
-  font-family: var(--font-main);
-  color: var(--brand-text);
-  background: linear-gradient(140deg, var(--brand-bg), var(--brand-bg-2));
+  font-family: var(--font-primary);
+  color: var(--theme_text-primary);
+  letter-spacing: 0.16px;
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(80rem 50rem at -10% 95%, rgba(37, 79, 173, 0.1), transparent 56%),
+    radial-gradient(70rem 40rem at 110% -10%, rgba(27, 97, 201, 0.1), transparent 61%),
+    linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 h1,
@@ -30,5 +69,66 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-title);
+  font-family: var(--font-display);
+  letter-spacing: 0.08px;
+}
+
+p,
+span,
+small,
+label,
+input,
+textarea,
+button {
+  letter-spacing: 0.12px;
+}
+
+a {
+  color: var(--theme_brand-link);
+}
+
+
+
+::-webkit-scrollbar {
+  width: 5px; /* 设置滚动条宽度 */
+}
+
+/* 滚动条轨道 */
+::-webkit-scrollbar-track {
+  background-color: #ffffff; /* 设置滚动条轨道的背景颜色 */
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+  background-color: #c2c2c2; /* 设置滚动条滑块的背景颜色 */
+  border-radius: 10px; /* 设置滚动条滑块的圆角 */
+}
+
+
+/* 滚动条容器 */
+.overflow-container {
+  overflow-y: auto; /* 显示垂直滚动条 */
+  /* max-height: 200px; */
+}
+
+/* 滚动条样式 */
+.overflow-container::-webkit-scrollbar {
+  width: 10px; /* 设置滚动条宽度 */
+  background-color: #f5f5f5; /* 设置滚动条背景色 */
+}
+
+/* 滚动条轨道 */
+.overflow-container::-webkit-scrollbar-track {
+  background-color: #f5f5f5; /* 设置滚动条轨道背景色 */
+}
+
+/* 滚动条滑块 */
+.overflow-container::-webkit-scrollbar-thumb {
+  background-color: #888; /* 设置滚动条滑块背景色 */
+  border-radius: 4px; /* 设置滑块圆角 */
+}
+
+/* 鼠标悬停在滑块上的样式 */
+.overflow-container::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* 设置滑块悬停时的背景色 */
 }

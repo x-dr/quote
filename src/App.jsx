@@ -26,13 +26,13 @@ function App() {
 
   return (
     <div className="app-shell">
-      <div className="ambient-shape shape-1"></div>
-      <div className="ambient-shape shape-2"></div>
+      {/* <div className="ambient-shape shape-1"></div>
+      <div className="ambient-shape shape-2"></div> */}
 
       <div className="mobile-shell">
         <header className="mobile-header">
           <Typography.Text className="mobile-brand">Quote Forge</Typography.Text>
-          <Typography.Title level={3} style={{ margin: 0 }}>
+          <Typography.Title level={3} className="mobile-title">
             {activeModule.title} 行情
           </Typography.Title>
           <Typography.Text type="secondary" className="mobile-subtitle">

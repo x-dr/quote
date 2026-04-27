@@ -10,19 +10,27 @@ createRoot(document.getElementById('root')).render(
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#b78a1f',
+          colorPrimary: '#1b61c9',
           borderRadius: 12,
           colorBgLayout: 'transparent',
-          fontFamily:
-            "'Avenir Next','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif",
+          colorText: '#181d26',
+          colorTextSecondary: 'rgba(4, 14, 32, 0.69)',
+          colorBorder: '#e0e2e6',
+          colorBgContainer: '#ffffff',
+          fontFamily: "'Haas',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif",
         },
         components: {
-          Menu: {
-            itemSelectedBg: 'rgba(255, 227, 159, 0.45)',
-            itemSelectedColor: '#6c4b00',
-          },
           Card: {
             headerFontSize: 16,
+            borderRadiusLG: 16,
+          },
+          Button: {
+            borderRadius: 12,
+          },
+          Segmented: {
+            trackBg: '#f8fafc',
+            itemSelectedBg: '#ffffff',
+            itemSelectedColor: '#181d26',
           },
         },
       }}

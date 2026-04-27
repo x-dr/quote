@@ -1,4 +1,5 @@
 import { Card, Col, Row, Tag, Typography } from 'antd'
+import './ComingSoonModule.css'
 
 const plans = [
   '统一接入实时行情 WS 与降级轮询',

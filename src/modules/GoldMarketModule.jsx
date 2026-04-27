@@ -7,7 +7,6 @@ import {
   Segmented,
   Select,
   Spin,
-  Table,
   Typography,
   message,
 } from 'antd'
@@ -17,6 +16,9 @@ import {
   cfGetKlineInfo,
   cfGetMinKlineInfo,
   cfGetSimpleQuote,
+  getGoldCountryList,
+  getHistoryETFSpreads,
+  getHistoryGoldCentralBankReserve,
   getRangeTimeSharingDotsByNums,
   homeFeedFlow,
 } from '../services/quoteApi'
@@ -27,6 +29,10 @@ const CHART_WIDTH = 680
 const CHART_HEIGHT = 300
 const CHART_PADDING_X = 10
 const CHART_PADDING_Y = 12
+const DATA_CHART_WIDTH = 660
+const DATA_CHART_HEIGHT = 230
+const DATA_CHART_PADDING_X = 10
+const DATA_CHART_PADDING_Y = 12
 
 const GOLD_SKU_OPTIONS = [
   { label: '京东黄金', value: 'WG-JDAU' },
@@ -90,6 +96,11 @@ const MORE_MIN_TIMEFRAME_OPTIONS = [
 const BOARD_OPTIONS = [
   { label: '投机情绪', value: 'sentiment' },
   { label: '数据图表', value: 'table' },
+]
+
+const RESERVE_METRIC_OPTIONS = [
+  { label: '按重量计', value: 'weight' },
+  { label: '按价值计', value: 'value' },
 ]
 
 const TIMEFRAME_LABEL_MAP = {
@@ -265,12 +276,24 @@ const formatSigned = (value, digits = 2, suffix = '') => {
   return `${sign}${formatted}${suffix}`
 }
 
+const getTrendClass = (value) => {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric === 0) {
+    return 'flat'
+  }
+
+  return numeric > 0 ? 'up' : 'down'
+}
+
 const formatClock = (timestamp) =>
   new Date(timestamp).toLocaleTimeString('zh-CN', {
     hour12: false,
   })
 
 const padTwo = (value) => String(value).padStart(2, '0')
+
+const formatDateForApi = (date = new Date()) =>
+  `${date.getFullYear()}-${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}`
 
 const buildRequestDateTime = (date = new Date()) =>
   `${date.getFullYear()}${padTwo(date.getMonth() + 1)}${padTwo(date.getDate())}${padTwo(
@@ -689,6 +712,88 @@ const createChartGeometry = (values, referencePrice) => {
   }
 }
 
+const parseTupleSeries = (rows) => {
+  if (!Array.isArray(rows)) {
+    return []
+  }
+
+  return rows
+    .map((row, index) => {
+      const label = Array.isArray(row) ? row[0] : pickFirst(row, ['date', 'time', 'label'])
+      const numeric = toNumber(Array.isArray(row) ? row[1] : pickFirst(row, ['value', 'amount']))
+
+      if (!label || numeric === null) {
+        return null
+      }
+
+      return {
+        id: `${label}-${index}`,
+        label: String(label),
+        value: Number(numeric),
+      }
+    })
+    .filter(Boolean)
+}
+
+const toDataChartModel = (rows, fallbackSize = 180) => {
+  const safeRows = rows.slice(-fallbackSize)
+
+  return {
+    series: safeRows.map((item) => item.value),
+    labels: safeRows.map((item) => item.label),
+  }
+}
+
+const createDataChartGeometry = (values) => {
+  const safeValues = values.length > 1 ? values : [values[0] || 0, values[0] || 0]
+  const minValue = Math.min(...safeValues)
+  const maxValue = Math.max(...safeValues)
+  const range = Math.max(maxValue - minValue, 1)
+  const innerWidth = DATA_CHART_WIDTH - DATA_CHART_PADDING_X * 2
+  const innerHeight = DATA_CHART_HEIGHT - DATA_CHART_PADDING_Y * 2
+
+  const points = safeValues.map((value, index) => {
+    const progress = safeValues.length === 1 ? 0 : index / (safeValues.length - 1)
+    const x = DATA_CHART_PADDING_X + innerWidth * progress
+    const y = DATA_CHART_PADDING_Y + ((maxValue - value) / range) * innerHeight
+
+    return { x, y }
+  })
+
+  const linePath = points.map((point) => `${point.x},${point.y}`).join(' ')
+  const areaPath = `${points[0].x},${DATA_CHART_HEIGHT - DATA_CHART_PADDING_Y} ${linePath} ${points[points.length - 1].x},${DATA_CHART_HEIGHT - DATA_CHART_PADDING_Y}`
+
+  const tickValues = Array.from({ length: 5 }, (_, index) => maxValue - (range / 4) * index)
+
+  return {
+    linePath,
+    areaPath,
+    tickValues,
+    tickY: Array.from({ length: 5 }, (_, index) =>
+      DATA_CHART_PADDING_Y + (innerHeight / 4) * index,
+    ),
+  }
+}
+
+const pickAxisLabels = (labels) => {
+  if (!labels.length) {
+    return ['--', '--', '--']
+  }
+
+  const middleIndex = Math.floor((labels.length - 1) / 2)
+  return [labels[0] || '--', labels[middleIndex] || '--', labels[labels.length - 1] || '--']
+}
+
+const formatDataValue = (value, digits = 3) => {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return '--'
+  }
+
+  return new Intl.NumberFormat('zh-CN', {
+    maximumFractionDigits: digits,
+  }).format(Number(value))
+}
+
 function SentimentGauge({ name, bull, bear }) {
   const pointer = Math.max(0, Math.min(180, bull * 1.8))
 
@@ -735,6 +840,21 @@ function GoldMarketModule() {
   const [sentimentDays, setSentimentDays] = useState([])
   const [sentimentLoading, setSentimentLoading] = useState(false)
   const [sentimentError, setSentimentError] = useState('')
+  const [dataChartLoading, setDataChartLoading] = useState(false)
+  const [dataChartError, setDataChartError] = useState('')
+  const [countryOptions, setCountryOptions] = useState([])
+  const [selectedCountry, setSelectedCountry] = useState('CHN')
+  const [reserveMetric, setReserveMetric] = useState('weight')
+  const [reserveData, setReserveData] = useState({
+    updateAt: '',
+    tag: '',
+    weightRows: [],
+    valueRows: [],
+  })
+  const [etfData, setEtfData] = useState({
+    updateAt: '',
+    rows: [],
+  })
 
   const uniqueCode = useMemo(() => SKU_UNIQUE_CODE_MAP[productSku] || 'AU9999', [productSku])
   const chartUCode = useMemo(
@@ -749,6 +869,40 @@ function GoldMarketModule() {
     () => (timeframe === 'more' ? moreTimeframe : timeframe),
     [moreTimeframe, timeframe],
   )
+
+  const activeCountryOption = useMemo(
+    () =>
+      countryOptions.find((item) => item.value === selectedCountry) ||
+      countryOptions[0] ||
+      null,
+    [countryOptions, selectedCountry],
+  )
+
+  const reserveRows = useMemo(
+    () => (reserveMetric === 'weight' ? reserveData.weightRows : reserveData.valueRows),
+    [reserveData.valueRows, reserveData.weightRows, reserveMetric],
+  )
+
+  const reserveChartModel = useMemo(() => toDataChartModel(reserveRows), [reserveRows])
+  const etfChartModel = useMemo(() => toDataChartModel(etfData.rows), [etfData.rows])
+  const reserveCurrentValue = useMemo(
+    () => reserveChartModel.series[reserveChartModel.series.length - 1] ?? null,
+    [reserveChartModel.series],
+  )
+  const etfCurrentValue = useMemo(
+    () => etfChartModel.series[etfChartModel.series.length - 1] ?? null,
+    [etfChartModel.series],
+  )
+  const reserveGeometry = useMemo(
+    () => createDataChartGeometry(reserveChartModel.series),
+    [reserveChartModel.series],
+  )
+  const etfGeometry = useMemo(() => createDataChartGeometry(etfChartModel.series), [etfChartModel.series])
+  const reserveAxisLabels = useMemo(
+    () => pickAxisLabels(reserveChartModel.labels),
+    [reserveChartModel.labels],
+  )
+  const etfAxisLabels = useMemo(() => pickAxisLabels(etfChartModel.labels), [etfChartModel.labels])
 
   const handleProductSkuChange = useCallback((nextSku) => {
     setProductSku(nextSku)
@@ -1140,11 +1294,89 @@ function GoldMarketModule() {
     [],
   )
 
+  const fetchCountryOptions = useCallback(async () => {
+    const response = await getGoldCountryList({})
+    const rows = response?.resultData?.data?.countryList || response?.data?.countryList || []
+
+    if (!Array.isArray(rows)) {
+      return []
+    }
+
+    return rows
+      .map((item) => ({
+        value: String(item?.code || ''),
+        label: String(item?.cn || item?.en || item?.code || ''),
+        icon: String(item?.icon || ''),
+      }))
+      .filter((item) => item.value && item.label)
+  }, [])
+
+  const fetchDataCharts = useCallback(
+    async (countryCode = selectedCountry, showToast = false) => {
+      setDataChartLoading(true)
+      setDataChartError('')
+
+      try {
+        const [countries, reserveResponse, etfResponse] = await Promise.all([
+          fetchCountryOptions(),
+          getHistoryGoldCentralBankReserve({
+            country: countryCode || 'CHN',
+            from: '2026-04-01',
+            num: -1000,
+          }),
+          getHistoryETFSpreads({
+            from: formatDateForApi(new Date()),
+            num: -200,
+          }),
+        ])
+
+        if (countries.length) {
+          setCountryOptions(countries)
+          if (!countries.some((item) => item.value === countryCode)) {
+            setSelectedCountry(countries[0].value)
+          }
+        }
+
+        const reservePayload = reserveResponse?.resultData?.data || reserveResponse?.data || {}
+        const etfPayload = etfResponse?.resultData?.data || etfResponse?.data || {}
+
+        const parsedWeightRows = parseTupleSeries(reservePayload?.weightReserveList)
+        const parsedValueRows = parseTupleSeries(reservePayload?.valueReserveList)
+        const parsedEtfRows = parseTupleSeries(etfPayload?.etfDataList)
+
+        setReserveData({
+          updateAt: String(reservePayload?.updateAt || ''),
+          tag: String(reservePayload?.tag || ''),
+          weightRows: parsedWeightRows,
+          valueRows: parsedValueRows,
+        })
+        setEtfData({
+          updateAt: String(etfPayload?.updateAt || ''),
+          rows: parsedEtfRows,
+        })
+
+        if (showToast) {
+          message.success('数据图表已刷新')
+        }
+      } catch (error) {
+        const text = error instanceof Error ? error.message : '数据图表请求失败'
+        setDataChartError(text)
+        if (showToast) {
+          message.error(text)
+        }
+      } finally {
+        setDataChartLoading(false)
+      }
+    },
+    [fetchCountryOptions, selectedCountry],
+  )
+
   const handleRefresh = useCallback(() => {
     void fetchSnapshot(true)
     void fetchChartSeries(activeTimeframe)
     void fetchSentiment(true)
-  }, [activeTimeframe, fetchSnapshot, fetchChartSeries, fetchSentiment])
+    void fetchDataCharts(selectedCountry, true)
+  }, [activeTimeframe, fetchSnapshot, fetchChartSeries, fetchSentiment, fetchDataCharts, selectedCountry])
 
   const handleTimeframeChange = useCallback((nextTimeframe) => {
     setTimeframe(nextTimeframe)
@@ -1183,6 +1415,16 @@ function GoldMarketModule() {
       clearTimeout(timerId)
     }
   }, [fetchSentiment])
+
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      void fetchDataCharts(selectedCountry)
+    }, 0)
+
+    return () => {
+      clearTimeout(timerId)
+    }
+  }, [fetchDataCharts, selectedCountry])
 
   useEffect(() => {
     if (activeTimeframe !== 'time') {
@@ -1274,6 +1516,9 @@ function GoldMarketModule() {
   }, [externalQuoteMap, rawSeries, snapshot])
 
   const displaySeries = useMemo(() => rawSeries, [rawSeries])
+  const quoteTrendClass = getTrendClass(quoteData.changeAmount)
+  const londonTrendClass = getTrendClass(quoteData.londonPercent)
+  const gold9999TrendClass = getTrendClass(quoteData.gold9999Percent)
 
   const chartAxisLabels = useMemo(() => {
     if (chartLabels.length >= 3) {
@@ -1308,31 +1553,24 @@ function GoldMarketModule() {
     }
   }, [chartGeometry.maxPrice, chartGeometry.minPrice, quoteData.openPrice])
 
-  const tickColumns = [
-    {
-      title: '时间',
-      dataIndex: 'updateTime',
-      width: 112,
-      render: (value) => formatClock(value),
-    },
-    {
-      title: '价格',
-      dataIndex: 'latestPrice',
-      width: 108,
-      render: (value) => formatPrice(value),
-    },
-    {
-      title: '涨跌幅',
-      dataIndex: 'changePercent',
-      width: 108,
-      render: (value) => formatSigned(value, 2, '%'),
-    },
-    {
-      title: '来源',
-      dataIndex: 'source',
-      width: 92,
-    },
-  ]
+  const countrySelectOptions = useMemo(
+    () =>
+      countryOptions.map((item) => ({
+        value: item.value,
+        label: (
+          <span className="data-country-label">
+            {item.icon ? <img src={item.icon} alt={item.label} /> : null}
+            <span>{item.label}</span>
+          </span>
+        ),
+      })),
+    [countryOptions],
+  )
+
+  const metricSelectOptions = useMemo(
+    () => RESERVE_METRIC_OPTIONS.map((item) => ({ value: item.value, label: item.label })),
+    [],
+  )
 
   return (
     <div className="gold-layout">
@@ -1371,8 +1609,10 @@ function GoldMarketModule() {
       <Card className="quote-top-card" variant="borderless">
         <div className="price-main-row">
           <div className="price-main-block">
-            <div className="price-main-value">{formatPrice(quoteData.latestPrice)}</div>
-            <div className="price-main-change">
+            <div className={`price-main-value ${quoteTrendClass}`}>
+              {formatPrice(quoteData.latestPrice)}
+            </div>
+            <div className={`price-main-change ${quoteTrendClass}`}>
               <span>{formatSigned(quoteData.changeAmount)}</span>
               <span>{formatSigned(quoteData.changePercent, 2, '%')}</span>
             </div>
@@ -1406,13 +1646,13 @@ function GoldMarketModule() {
         <div className="price-linked-row">
           <div className="linked-item">
             <span>伦敦金</span>
-            <strong>{formatPrice(quoteData.londonPrice)}</strong>
-            <em>{formatSigned(quoteData.londonPercent, 2, '%')}</em>
+            <strong className={londonTrendClass}>{formatPrice(quoteData.londonPrice)}</strong>
+            <em className={londonTrendClass}>{formatSigned(quoteData.londonPercent, 2, '%')}</em>
           </div>
           <div className="linked-item">
             <span>黄金9999</span>
-            <strong>{formatPrice(quoteData.gold9999Price)}</strong>
-            <em>{formatSigned(quoteData.gold9999Percent, 2, '%')}</em>
+            <strong className={gold9999TrendClass}>{formatPrice(quoteData.gold9999Price)}</strong>
+            <em className={gold9999TrendClass}>{formatSigned(quoteData.gold9999Percent, 2, '%')}</em>
           </div>
         </div>
       </Card>
@@ -1556,16 +1796,174 @@ function GoldMarketModule() {
             <div className="friend-circle">金友圈</div>
           </div>
         ) : (
-          <Card className="data-card" variant="borderless">
-            <Table
-              rowKey="id"
-              size="small"
-              columns={tickColumns}
-              dataSource={ticks.slice(0, 20)}
-              pagination={false}
-              locale={{ emptyText: '等待实时数据推送...' }}
-            />
-          </Card>
+          <div className="data-board-list">
+            {dataChartError ? <Alert showIcon type="warning" title={dataChartError} /> : null}
+
+            <Card className="data-panel-card" variant="borderless">
+              <div className="data-panel-head">
+                <Typography.Title level={3} className="data-panel-title">
+                  全球官方黄金储备
+                </Typography.Title>
+                <span className="data-panel-detail">查看详情</span>
+              </div>
+
+              <div className="data-panel-select-row">
+                <Select
+                  value={activeCountryOption?.value || selectedCountry}
+                  options={countrySelectOptions}
+                  onChange={setSelectedCountry}
+                  variant="filled"
+                  className="data-select"
+                  loading={dataChartLoading}
+                  popupMatchSelectWidth={280}
+                />
+
+                <Select
+                  value={reserveMetric}
+                  options={metricSelectOptions}
+                  onChange={setReserveMetric}
+                  variant="filled"
+                  className="data-select"
+                />
+              </div>
+
+              <div className="data-panel-summary-row">
+                <div>
+                  <div className="data-summary-label">当前黄金储备</div>
+                  <div className="data-summary-value">
+                    {formatDataValue(reserveCurrentValue, 3)}
+                    <span> 吨</span>
+                    {reserveData.tag ? <em>{reserveData.tag}</em> : null}
+                  </div>
+                </div>
+                <div className="data-update-text">更新时间:{reserveData.updateAt || '--'}</div>
+              </div>
+
+              <div className="data-mini-title">黄金储存总量-月度</div>
+              <div className="data-chart-shell">
+                {dataChartLoading ? <Spin size="small" className="chart-loading" /> : null}
+
+                <div className="data-y-axis">
+                  {reserveGeometry.tickValues.map((tickValue, index) => (
+                    <span key={`reserve-tick-${tickValue}-${index}`}>{formatDataValue(tickValue, 3)}</span>
+                  ))}
+                </div>
+
+                <svg
+                  className="data-chart-svg"
+                  viewBox={`0 0 ${DATA_CHART_WIDTH} ${DATA_CHART_HEIGHT}`}
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id="reserveFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="rgba(239, 133, 58, 0.22)" />
+                      <stop offset="100%" stopColor="rgba(239, 133, 58, 0.02)" />
+                    </linearGradient>
+                  </defs>
+
+                  {reserveGeometry.tickY.map((value) => (
+                    <line
+                      key={`reserve-grid-${value}`}
+                      x1={DATA_CHART_PADDING_X}
+                      y1={value}
+                      x2={DATA_CHART_WIDTH - DATA_CHART_PADDING_X}
+                      y2={value}
+                      stroke="rgba(210, 212, 219, 0.75)"
+                      strokeDasharray="3 4"
+                    />
+                  ))}
+
+                  <polygon points={reserveGeometry.areaPath} fill="url(#reserveFill)" />
+                  <polyline
+                    points={reserveGeometry.linePath}
+                    fill="none"
+                    stroke="#ef853a"
+                    strokeWidth="2.2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+
+                <div className="data-axis-labels">
+                  <span>{reserveAxisLabels[0]}</span>
+                  <span>{reserveAxisLabels[1]}</span>
+                  <span>{reserveAxisLabels[2]}</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="data-panel-card" variant="borderless">
+              <div className="data-panel-head">
+                <Typography.Title level={3} className="data-panel-title">
+                  黄金ETF持仓
+                </Typography.Title>
+                <span className="data-panel-detail">查看详情</span>
+              </div>
+
+              <div className="data-panel-summary-row data-panel-summary-row-etf">
+                <div>
+                  <div className="data-summary-label">当前总持仓</div>
+                  <div className="data-summary-value">
+                    {formatDataValue(etfCurrentValue, 3)}
+                    <span> 吨</span>
+                  </div>
+                </div>
+                <div className="data-update-text">更新时间:{etfData.updateAt || '--'}</div>
+              </div>
+
+              <div className="data-mini-title">黄金ETF总持仓变化</div>
+              <div className="data-chart-shell">
+                {dataChartLoading ? <Spin size="small" className="chart-loading" /> : null}
+
+                <div className="data-y-axis">
+                  {etfGeometry.tickValues.map((tickValue, index) => (
+                    <span key={`etf-tick-${tickValue}-${index}`}>{formatDataValue(tickValue, 3)}</span>
+                  ))}
+                </div>
+
+                <svg
+                  className="data-chart-svg"
+                  viewBox={`0 0 ${DATA_CHART_WIDTH} ${DATA_CHART_HEIGHT}`}
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id="etfFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="rgba(239, 133, 58, 0.22)" />
+                      <stop offset="100%" stopColor="rgba(239, 133, 58, 0.02)" />
+                    </linearGradient>
+                  </defs>
+
+                  {etfGeometry.tickY.map((value) => (
+                    <line
+                      key={`etf-grid-${value}`}
+                      x1={DATA_CHART_PADDING_X}
+                      y1={value}
+                      x2={DATA_CHART_WIDTH - DATA_CHART_PADDING_X}
+                      y2={value}
+                      stroke="rgba(210, 212, 219, 0.75)"
+                      strokeDasharray="3 4"
+                    />
+                  ))}
+
+                  <polygon points={etfGeometry.areaPath} fill="url(#etfFill)" />
+                  <polyline
+                    points={etfGeometry.linePath}
+                    fill="none"
+                    stroke="#ef853a"
+                    strokeWidth="2.2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+
+                <div className="data-axis-labels">
+                  <span>{etfAxisLabels[0]}</span>
+                  <span>{etfAxisLabels[1]}</span>
+                  <span>{etfAxisLabels[2]}</span>
+                </div>
+              </div>
+            </Card>
+          </div>
         )}
       </section>
     </div>
