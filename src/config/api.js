@@ -2,9 +2,9 @@
 // export const STRATEGY_API_URL = 'https://api.jdjygold.com'
 // export const VITE_HOME_FEED_API = 'https://api.jdjygold.com'
 // export const STOCK_API = 'https://quoteapi.jd.com'
-export const BASE_API = 'http://127.0.0.1:3000/api/jdjy'
-export const STRATEGY_API_URL = 'http://127.0.0.1:3000/api/jdjy'
-export const VITE_HOME_FEED_API = 'http://127.0.0.1:3000/api/jdjy'
+export const BASE_API = 'https://jdjyapi.tryxd.cn/api/jdjy'
+export const STRATEGY_API_URL = 'https://jdjyapi.tryxd.cn/api/jdjy'
+export const VITE_HOME_FEED_API = 'https://jdjyapi.tryxd.cn/api/jdjy'
 export const STOCK_API = 'http://127.0.0.1:3000/proxy'
 
 export const GOLD_WS_API = 'wss://cfws.jdjygold.com/data'
