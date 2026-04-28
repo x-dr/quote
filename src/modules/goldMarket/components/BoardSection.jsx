@@ -1,4 +1,4 @@
-import { Alert, Card, Segmented, Select, Spin, Typography } from 'antd'
+import { Alert, Card, Segmented, Select, Spin, Table, Typography } from 'antd'
 import {
   BOARD_OPTIONS,
   DATA_CHART_HEIGHT,
@@ -7,6 +7,38 @@ import {
   SentimentGauge,
   formatDataValue,
 } from '../helpers'
+
+const RTJ_CODE_MEANING_MAP = {
+  'Ag(T+D)': '白银T+D',
+  'Au(T+D)': '黄金T+D',
+  'mAu(T+D)': '迷你黄金T+D',
+  'Au99.99': '黄金9999',
+  GLNC: '伦敦金',
+  SLNC: '伦敦银',
+  PLNC: '伦敦铂',
+  PANC: '伦敦钯',
+  XAU: '国际现货黄金',
+  XAG: '国际现货白银',
+  XPD: '国际现货钯金',
+  XAP: '国际现货铂金',
+  'Pt99.95': '铂金9995',
+  RH: '铑金',
+  USDCNH: '美元/人民币汇率',
+  JZJ_ag_PB: '白银回购价',
+  JZJ_ag_PS: '白银销售价',
+  JZJ_au_PB: '黄金回购价',
+  JZJ_au_PS: '黄金销售价',
+  JZJ_pt_PB: '铂金回购价',
+  JZJ_pt_PS: '铂金销售价',
+  JZJ_pd_PB: '钯金回购价',
+  JZJ_pd_PS: '钯金销售价',
+  JZJ_IR_PB: '铱回购价',
+  JZJ_IR_PS: '铱销售价',
+  JZJ_RU_PB: '钌回购价',
+  JZJ_RU_PS: '钌销售价',
+  RH_JZL_PB: '铑回购价',
+  RH_JZL_PS: '铑销售价',
+}
 
 function BoardSection({
   boardTab,
@@ -33,7 +65,114 @@ function BoardSection({
   etfData,
   etfGeometry,
   etfAxisLabels,
+  rtjRows,
+  rtjConnected,
+  rtjError,
+  rtjUpdatedAt,
 }) {
+  const formatCell = (value, digits = 2) => {
+    if (value === null || value === undefined || Number.isNaN(Number(value))) {
+      return '--'
+    }
+
+    return Number(value).toLocaleString('zh-CN', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    })
+  }
+
+  const rtjColumns = [
+    {
+      title: '品种',
+      dataIndex: 'code',
+      key: 'code',
+      width: 120,
+      fixed: 'left',
+      render: (value, row) => (
+        <div className="rtj-name-cell">
+          <strong>{RTJ_CODE_MEANING_MAP[value] || row.name || value || '--'}</strong>
+          <span>{row.code || value || '--'}</span>
+        </div>
+      ),
+    },
+    {
+      title: '最新',
+      dataIndex: 'last',
+      key: 'last',
+      width: 104,
+      render: (value, row) => (
+        <span className={`rtj-value ${Number(row.updown) > 0 ? 'up' : Number(row.updown) < 0 ? 'down' : 'flat'}`}>
+          {formatCell(value, 3)}
+        </span>
+      ),
+    },
+    {
+      title: '涨跌',
+      dataIndex: 'updown',
+      key: 'updown',
+      width: 104,
+      render: (value) => {
+        const numeric = Number(value)
+        const trendClass = numeric > 0 ? 'up' : numeric < 0 ? 'down' : 'flat'
+        const text = Number.isFinite(numeric)
+          ? `${numeric > 0 ? '+' : ''}${formatCell(numeric, 3)}`
+          : '--'
+
+        return <span className={`rtj-value ${trendClass}`}>{text}</span>
+      },
+    },
+    {
+      title: '涨跌幅',
+      dataIndex: 'updownRate',
+      key: 'updownRate',
+      width: 110,
+      render: (value) => {
+        const numeric = Number(value)
+        const trendClass = numeric > 0 ? 'up' : numeric < 0 ? 'down' : 'flat'
+        const text = Number.isFinite(numeric)
+          ? `${numeric > 0 ? '+' : ''}${formatCell(numeric, 3)}%`
+          : '--'
+
+        return <span className={`rtj-value ${trendClass}`}>{text}</span>
+      },
+    },
+    {
+      title: '买入',
+      dataIndex: 'bid',
+      key: 'bid',
+      width: 100,
+      render: (value) => formatCell(value, 3),
+    },
+    {
+      title: '卖出',
+      dataIndex: 'ask',
+      key: 'ask',
+      width: 100,
+      render: (value) => formatCell(value, 3),
+    },
+    {
+      title: '最高',
+      dataIndex: 'high',
+      key: 'high',
+      width: 100,
+      render: (value) => formatCell(value, 3),
+    },
+    {
+      title: '最低',
+      dataIndex: 'low',
+      key: 'low',
+      width: 100,
+      render: (value) => formatCell(value, 3),
+    },
+    {
+      title: '昨收',
+      dataIndex: 'preClose',
+      key: 'preClose',
+      width: 100,
+      render: (value) => formatCell(value, 3),
+    },
+  ]
+
   return (
     <section className="board-section">
       <Segmented className="board-segmented" options={BOARD_OPTIONS} value={boardTab} onChange={onBoardTabChange} />
@@ -86,7 +225,7 @@ function BoardSection({
 
           <div className="friend-circle">金友圈</div>
         </div>
-      ) : (
+      ) : boardTab === 'table' ? (
         <div className="data-board-list">
           {dataChartError ? <Alert showIcon type="warning" title={dataChartError} /> : null}
 
@@ -249,6 +388,38 @@ function BoardSection({
                 <span>{etfAxisLabels[2]}</span>
               </div>
             </div>
+
+          </Card>
+        </div>
+      ) : (
+        <div className="data-board-list">
+          <Card className="data-panel-card" variant="borderless">
+            <div className="rtj-table-head">
+              <Typography.Title level={5} className="rtj-table-title">
+                RTJ 实时行情
+              </Typography.Title>
+              <div className="rtj-meta">
+                <span className={`rtj-status ${rtjConnected ? 'online' : 'offline'}`}>
+                  {rtjConnected ? '已连接' : '已断开'}
+                </span>
+                <span>更新时间:{rtjUpdatedAt || '--'}</span>
+              </div>
+            </div>
+
+            {rtjError ? <Alert showIcon type="warning" title={rtjError} className="rtj-error" /> : null}
+
+            <Table
+              size="small"
+              className="rtj-table"
+              rowKey="id"
+              columns={rtjColumns}
+              dataSource={rtjRows}
+              pagination={false}
+              scroll={{ x: 1050, y: 320 }}
+              locale={{
+                emptyText: '暂无 RTJ 行情数据',
+              }}
+            />
           </Card>
         </div>
       )}

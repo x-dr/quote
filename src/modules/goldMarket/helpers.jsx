@@ -75,6 +75,7 @@ export const MORE_MIN_TIMEFRAME_OPTIONS = [
 ]
 
 export const BOARD_OPTIONS = [
+  { label: 'RTJ实时行情', value: 'rtj' },
   { label: '投机情绪', value: 'sentiment' },
   { label: '数据图表', value: 'table' },
 ]

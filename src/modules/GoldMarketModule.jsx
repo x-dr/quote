@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { App } from 'antd'
+import { RTJ_SSE_API } from '../config/api'
 import {
   cfgetTimeSharingDots,
   cfGetKlineInfo,
@@ -77,7 +78,7 @@ function GoldMarketModule() {
   const [wsPrimaryKey, setWsPrimaryKey] = useState(DEFAULT_PRIMARY_WS_KEY)
   const [timeframe, setTimeframe] = useState('time')
   const [moreTimeframe, setMoreTimeframe] = useState('m30')
-  const [boardTab, setBoardTab] = useState('sentiment')
+  const [boardTab, setBoardTab] = useState('rtj')
   const [sentimentDays, setSentimentDays] = useState([])
   const [sentimentLoading, setSentimentLoading] = useState(false)
   const [sentimentError, setSentimentError] = useState('')
@@ -96,6 +97,10 @@ function GoldMarketModule() {
     updateAt: '',
     rows: [],
   })
+  const [rtjQuoteMap, setRtjQuoteMap] = useState({})
+  const [rtjConnected, setRtjConnected] = useState(false)
+  const [rtjError, setRtjError] = useState('')
+  const [rtjUpdatedAt, setRtjUpdatedAt] = useState('')
 
   const uniqueCode = useMemo(() => SKU_UNIQUE_CODE_MAP[productSku] || 'AU9999', [productSku])
   const chartUCode = useMemo(
@@ -144,6 +149,44 @@ function GoldMarketModule() {
     [reserveChartModel.labels],
   )
   const etfAxisLabels = useMemo(() => pickAxisLabels(etfChartModel.labels), [etfChartModel.labels])
+  const rtjRows = useMemo(() => {
+    const rows = Object.values(rtjQuoteMap || {})
+    const customOrder = ['Au99.99', 'XAU', 'XAG', 'USDCNH', 'XAP', 'XPD']
+    const orderMap = new Map(customOrder.map((code, index) => [code, index]))
+
+    const rankCode = (code) => {
+      const text = String(code || '')
+
+      if (orderMap.has(text)) {
+        return [0, orderMap.get(text)]
+      }
+
+      if (text.startsWith('JZJ_')) {
+        return [1, text]
+      }
+
+      return [2, text]
+    }
+
+    rows.sort((left, right) => {
+      const leftCode = String(left?.code || '')
+      const rightCode = String(right?.code || '')
+      const leftRank = rankCode(leftCode)
+      const rightRank = rankCode(rightCode)
+
+      if (leftRank[0] !== rightRank[0]) {
+        return leftRank[0] - rightRank[0]
+      }
+
+      if (leftRank[0] === 0) {
+        return leftRank[1] - rightRank[1]
+      }
+
+      return String(leftRank[1]).localeCompare(String(rightRank[1]), 'en')
+    })
+
+    return rows
+  }, [rtjQuoteMap])
 
   const {
     reserveDetailVisible,
@@ -263,6 +306,164 @@ function GoldMarketModule() {
       unsubs.forEach((unsubscribe) => unsubscribe())
     }
   }, [wsPrimaryKey, wsSubscribeKeys])
+
+  useEffect(() => {
+    if (!RTJ_SSE_API) {
+      return undefined
+    }
+
+    let eventSource = null
+    let closed = false
+
+    const toNumericOrNull = (value) => {
+      if (value === null || value === undefined || value === '') {
+        return null
+      }
+
+      const numeric = Number(value)
+      return Number.isFinite(numeric) ? numeric : null
+    }
+
+    const toTimestampText = (value) => {
+      if (!value) {
+        return ''
+      }
+
+      const parsed = Date.parse(String(value))
+      if (!Number.isFinite(parsed)) {
+        return String(value)
+      }
+
+      return new Date(parsed).toLocaleString('zh-CN', { hour12: false })
+    }
+
+    const normalizeRtjQuote = (source) => {
+      if (!source || typeof source !== 'object') {
+        return null
+      }
+
+      const code = String(source.code || source.name || '')
+      if (!code) {
+        return null
+      }
+
+      return {
+        id: code,
+        code,
+        name: String(source.name || source.code || ''),
+        last: toNumericOrNull(source.last),
+        bid: toNumericOrNull(source.bid),
+        ask: toNumericOrNull(source.ask),
+        high: toNumericOrNull(source.high),
+        low: toNumericOrNull(source.low),
+        preClose: toNumericOrNull(source.preClose),
+        updown: toNumericOrNull(source.updown),
+        updownRate: toNumericOrNull(source.updownRate),
+        timestamp: String(source.timestamp || ''),
+      }
+    }
+
+    const applyInitPayload = (payload) => {
+      const quotes = payload?.quotes
+      if (!quotes || typeof quotes !== 'object') {
+        return
+      }
+
+      const entries = Object.values(quotes)
+        .map((item) => normalizeRtjQuote(item))
+        .filter(Boolean)
+
+      if (!entries.length) {
+        return
+      }
+
+      const nextMap = {}
+      for (const row of entries) {
+        nextMap[row.code] = row
+      }
+
+      setRtjQuoteMap(nextMap)
+      setRtjConnected(Boolean(payload?.connected))
+      setRtjUpdatedAt(toTimestampText(payload?.timestamp) || toTimestampText(entries[0]?.timestamp))
+      setRtjError('')
+    }
+
+    const applyQuotePayload = (payload) => {
+      const row = normalizeRtjQuote(payload?.quote)
+      if (!row) {
+        return
+      }
+
+      setRtjQuoteMap((previous) => ({
+        ...previous,
+        [row.code]: row,
+      }))
+      setRtjConnected(true)
+      setRtjUpdatedAt(toTimestampText(payload?.timestamp) || toTimestampText(row.timestamp))
+      setRtjError('')
+    }
+
+    const safeParse = (text) => {
+      try {
+        return JSON.parse(text)
+      } catch {
+        return null
+      }
+    }
+
+    const onInit = (event) => {
+      const payload = safeParse(event?.data)
+      if (!payload) {
+        return
+      }
+
+      applyInitPayload(payload)
+    }
+
+    const onQuote = (event) => {
+      const payload = safeParse(event?.data)
+      if (!payload) {
+        return
+      }
+
+      applyQuotePayload(payload)
+    }
+
+    try {
+      eventSource = new EventSource(RTJ_SSE_API)
+      eventSource.addEventListener('init', onInit)
+      eventSource.addEventListener('quote', onQuote)
+      eventSource.onopen = () => {
+        if (closed) {
+          return
+        }
+
+        setRtjConnected(true)
+        setRtjError('')
+      }
+      eventSource.onerror = () => {
+        if (closed) {
+          return
+        }
+
+        setRtjConnected(false)
+        setRtjError('RTJ 实时行情连接异常')
+      }
+    } catch {
+      setRtjConnected(false)
+      setRtjError('RTJ 实时行情初始化失败')
+    }
+
+    return () => {
+      closed = true
+
+      if (eventSource) {
+        eventSource.removeEventListener('init', onInit)
+        eventSource.removeEventListener('quote', onQuote)
+        eventSource.close()
+      }
+    }
+  }, [])
 
   const fetchSnapshot = useCallback(
     async (showToast = true) => {
@@ -899,6 +1100,10 @@ function GoldMarketModule() {
         etfData={etfData}
         etfGeometry={etfGeometry}
         etfAxisLabels={etfAxisLabels}
+        rtjRows={rtjRows}
+        rtjConnected={rtjConnected}
+        rtjError={rtjError}
+        rtjUpdatedAt={rtjUpdatedAt}
       />
 
       <ReserveDetailDrawer
