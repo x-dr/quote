@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Suspense, startTransition, useCallback, useMemo, useState } from 'react'
 import { Segmented, Typography } from 'antd'
 import { marketModules } from './modules/registry'
 import './App.css'
@@ -24,6 +24,15 @@ function App() {
     [],
   )
 
+  const handleModuleChange = useCallback((value) => {
+    const nextModule = marketModules.find((module) => module.key === value)
+    nextModule?.load?.()
+
+    startTransition(() => {
+      setActiveModuleKey(value)
+    })
+  }, [])
+
   return (
     <div className="app-shell">
       {/* <div className="ambient-shape shape-1"></div>
@@ -43,12 +52,14 @@ function App() {
             block
             value={activeModuleKey}
             options={moduleOptions}
-            onChange={(value) => setActiveModuleKey(value)}
+            onChange={handleModuleChange}
           />
         </header>
 
         <main className="mobile-content">
-          <ActiveModuleComponent title={activeModule.title} subtitle={activeModule.subtitle} />
+          <Suspense fallback={<div className="module-loading">模块加载中...</div>}>
+            <ActiveModuleComponent title={activeModule.title} subtitle={activeModule.subtitle} />
+          </Suspense>
         </main>
       </div>
     </div>

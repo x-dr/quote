@@ -188,7 +188,7 @@ export function useGoldDetailDrawers({ selectedCountry, reserveMetric }) {
         }
       }
     },
-    [selectedCountry],
+    [message, selectedCountry],
   )
 
   const fetchEtfDetail = useCallback(
@@ -270,7 +270,7 @@ export function useGoldDetailDrawers({ selectedCountry, reserveMetric }) {
         }
       }
     },
-    [],
+    [message],
   )
 
   const handleOpenReserveDetail = useCallback(() => {
@@ -313,22 +313,32 @@ export function useGoldDetailDrawers({ selectedCountry, reserveMetric }) {
 
   useEffect(() => {
     if (!reserveDetailVisible) {
-      return
+      return undefined
     }
 
     const initialFrom = buildEtfChangeInitialFrom(new Date())
-    setReserveDetailChangeFrom(initialFrom)
-    void fetchReserveDetail(selectedCountry, false, initialFrom, false)
+    const timerId = window.setTimeout(() => {
+      void fetchReserveDetail(selectedCountry, false, initialFrom, false)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
   }, [fetchReserveDetail, reserveDetailVisible, selectedCountry])
 
   useEffect(() => {
     if (!etfDetailVisible) {
-      return
+      return undefined
     }
 
     const initialFrom = buildEtfChangeInitialFrom(new Date())
-    setEtfDetailChangeFrom(initialFrom)
-    void fetchEtfDetail(ETF_DEFAULT_COUNTRY, false, initialFrom, false)
+    const timerId = window.setTimeout(() => {
+      void fetchEtfDetail(ETF_DEFAULT_COUNTRY, false, initialFrom, false)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
   }, [etfDetailVisible, fetchEtfDetail])
 
   return {

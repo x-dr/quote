@@ -97,6 +97,19 @@
   background: var(--theme_surface-light);
 }
 
+.module-loading {
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  border-radius: var(--radius-card);
+  color: var(--theme_text-weak);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.98)),
+    var(--theme_surface-light);
+  border: 1px dashed var(--theme_border-default);
+}
+
 @media (max-width: 992px) {
   .app-shell {
     padding: var(--space-3);

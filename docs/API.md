@@ -5,6 +5,7 @@
 - `src/services/quoteApi.js`
 - `src/services/http.js`
 - `src/modules/GoldMarketModule.jsx`
+- `src/modules/StockMarketModule.jsx`
 - `src/modules/goldMarket/helpers.jsx`
 - `src/modules/goldMarket/hooks/useGoldDetailDrawers.js`
 
@@ -15,6 +16,9 @@
   - `STRATEGY_API_URL`: `http://127.0.0.1:3000/api/jdjy`
   - `VITE_HOME_FEED_API`: `http://127.0.0.1:3000/api/jdjy`
   - `STOCK_API`: `http://127.0.0.1:3000/proxy`
+- 实时流地址
+  - `RTJ_SSE_API`: `http://192.168.1.35:3000/api/rtj/stream`
+  - `TXQUOTE_SSE_API`: `http://192.168.1.35:3000/api/txquote/stream`
 - 请求方法：`POST`
 - 请求头：`Content-Type: application/x-www-form-urlencoded;charset=UTF-8`
 - 认证信息：`credentials: include`（会携带 Cookie）
@@ -697,7 +701,76 @@ const body = new URLSearchParams({
 }
 ```
 
-## 6. cURL 示例模板
+## 6. SSE 实时流
+
+### 6.1 TXQUOTE 股票实时流
+
+- URL: `TXQUOTE_SSE_API`
+- Method: `GET`
+- 协议: `EventSource / text/event-stream`
+- 当前消费位置: `src/modules/StockMarketModule.jsx`
+
+事件说明：
+
+| 事件名 | 说明 |
+| --- | --- |
+| `init` | 首屏初始化快照，包含 `codes`、`count`、`quotes` |
+| `quote` | 单条或批量增量行情更新 |
+
+`init` 示例：
+
+```txt
+event: init
+data: {
+  "codes": ["sh000001", "sz399001", "hkHSI", "usDJI", "usIXIC", "usINX"],
+  "count": 6,
+  "quotes": [
+    {
+      "code": 0,
+      "data": {
+        "symbol": "sh000001",
+        "name": "上证指数",
+        "price": 4078.64,
+        "change": -7.7,
+        "changePercent": -0.19,
+        "open": 4076.14,
+        "high": 4090.2,
+        "low": 4062.87,
+        "prevClose": 4086.34,
+        "volume": 600507498,
+        "amount": 111395556,
+        "amplitude": 0.67
+      },
+      "symbol": "sh000001"
+    }
+  ],
+  "timestamp": "2026-04-28T10:10:05Z"
+}
+```
+
+前端当前归一化字段：
+
+| 字段 | 说明 |
+| --- | --- |
+| `symbol` | 订阅编码，如 `sh000001` / `usDJI` |
+| `code` | 行情代码，如 `000001` / `.DJI` |
+| `name` | 标的名称 |
+| `marketKey` | 前端市场分组：`cn` / `hk` / `us` |
+| `currency` | 币种，优先读取接口字段，缺省按市场回退 |
+| `price` | 最新价 |
+| `change` | 涨跌额 |
+| `changePercent` | 涨跌幅 |
+| `open` | 今开 |
+| `high` | 最高 |
+| `low` | 最低 |
+| `prevClose` | 昨收 |
+| `volume` | 成交量 |
+| `amount` | 成交额 |
+| `amplitude` | 振幅 |
+| `volumeRatio` | 量比 |
+| `updatedAt` | 行情时间，优先取流级 `timestamp`，否则回退 `raw` 时间字段 |
+
+## 7. cURL 示例模板
 
 ```bash
 curl 'http://127.0.0.1:3000/api/jdjy/cfGetMinKlineInfo' \

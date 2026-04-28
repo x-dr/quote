@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { App } from 'antd'
 import { RTJ_SSE_API } from '../config/api'
 import {
-  cfgetTimeSharingDots,
   cfGetKlineInfo,
   cfGetMinKlineInfo,
   cfGetSimpleQuote,
@@ -20,6 +19,7 @@ import {
   FIXED_WS_QUOTE_KEYS,
   GOLD_SKU_OPTIONS,
   MIN_KLINE_INCREMENT_INTERVAL_MS,
+  MIN_KLINE_TIMEFRAME_TYPE_MAP,
   RESERVE_METRIC_OPTIONS,
   QUOTE_KEYS,
   SKU_CHART_UCODE_MAP,
@@ -49,11 +49,12 @@ import {
   buildTimeframeRequestPlan,
 } from './goldMarket/helpers'
 import BoardSection from './goldMarket/components/BoardSection'
-import EtfDetailDrawer from './goldMarket/components/EtfDetailDrawer'
 import QuotePanel from './goldMarket/components/QuotePanel'
-import ReserveDetailDrawer from './goldMarket/components/ReserveDetailDrawer'
 import { useGoldDetailDrawers } from './goldMarket/hooks/useGoldDetailDrawers'
 import './GoldMarketModule.css'
+
+const ReserveDetailDrawer = lazy(() => import('./goldMarket/components/ReserveDetailDrawer'))
+const EtfDetailDrawer = lazy(() => import('./goldMarket/components/EtfDetailDrawer'))
 
 function GoldMarketModule() {
   const { message } = App.useApp()
@@ -450,8 +451,13 @@ function GoldMarketModule() {
         setRtjError('RTJ 实时行情连接异常')
       }
     } catch {
-      setRtjConnected(false)
-      setRtjError('RTJ 实时行情初始化失败')
+      window.setTimeout(() => {
+        if (closed) {
+          return
+        }
+
+        setRtjError('RTJ 实时行情初始化失败')
+      }, 0)
     }
 
     return () => {
@@ -549,7 +555,7 @@ function GoldMarketModule() {
         }
       }
     },
-    [uniqueCode],
+    [message, uniqueCode],
   )
 
   const fetchChartSeries = useCallback(
@@ -630,7 +636,7 @@ function GoldMarketModule() {
         }
       }
     },
-    [chartUCode],
+    [chartUCode, message],
   )
 
   const fetchTimeIncremental = useCallback(async () => {
@@ -765,7 +771,7 @@ function GoldMarketModule() {
         setSentimentLoading(false)
       }
     },
-    [],
+    [message],
   )
 
   const fetchCountryOptions = useCallback(async () => {
@@ -842,7 +848,7 @@ function GoldMarketModule() {
         setDataChartLoading(false)
       }
     },
-    [fetchCountryOptions, selectedCountry],
+    [fetchCountryOptions, message, selectedCountry],
   )
 
   const handleRefresh = useCallback(() => {
@@ -1106,42 +1112,48 @@ function GoldMarketModule() {
         rtjUpdatedAt={rtjUpdatedAt}
       />
 
-      <ReserveDetailDrawer
-        reserveDetailVisible={reserveDetailVisible}
-        onClose={handleCloseReserveDetail}
-        reserveDetailLoading={reserveDetailLoading}
-        onRefresh={handleRefreshReserveDetail}
-        activeCountryOption={activeCountryOption}
-        selectedCountry={selectedCountry}
-        countrySelectOptions={countrySelectOptions}
-        onCountryChange={setSelectedCountry}
-        reserveMetric={reserveMetric}
-        metricSelectOptions={metricSelectOptions}
-        onReserveMetricChange={setReserveMetric}
-        reserveDetailError={reserveDetailError}
-        reserveDetailCurrentValue={reserveDetailCurrentValue}
-        reserveDetailData={reserveDetailData}
-        reserveDetailGeometry={reserveDetailGeometry}
-        reserveDetailAxisLabels={reserveDetailAxisLabels}
-        reserveDetailChangeDisplayRows={reserveDetailChangeDisplayRows}
-        reserveDetailMaxChangeAbs={reserveDetailMaxChangeAbs}
-        onLoadMoreChange={handleLoadMoreReserveChange}
-      />
+      <Suspense fallback={null}>
+        {reserveDetailVisible ? (
+          <ReserveDetailDrawer
+            reserveDetailVisible={reserveDetailVisible}
+            onClose={handleCloseReserveDetail}
+            reserveDetailLoading={reserveDetailLoading}
+            onRefresh={handleRefreshReserveDetail}
+            activeCountryOption={activeCountryOption}
+            selectedCountry={selectedCountry}
+            countrySelectOptions={countrySelectOptions}
+            onCountryChange={setSelectedCountry}
+            reserveMetric={reserveMetric}
+            metricSelectOptions={metricSelectOptions}
+            onReserveMetricChange={setReserveMetric}
+            reserveDetailError={reserveDetailError}
+            reserveDetailCurrentValue={reserveDetailCurrentValue}
+            reserveDetailData={reserveDetailData}
+            reserveDetailGeometry={reserveDetailGeometry}
+            reserveDetailAxisLabels={reserveDetailAxisLabels}
+            reserveDetailChangeDisplayRows={reserveDetailChangeDisplayRows}
+            reserveDetailMaxChangeAbs={reserveDetailMaxChangeAbs}
+            onLoadMoreChange={handleLoadMoreReserveChange}
+          />
+        ) : null}
 
-      <EtfDetailDrawer
-        etfDetailVisible={etfDetailVisible}
-        onClose={handleCloseEtfDetail}
-        etfDetailLoading={etfDetailLoading}
-        onRefresh={handleRefreshEtfDetail}
-        etfDetailError={etfDetailError}
-        etfDetailCurrentValue={etfDetailCurrentValue}
-        etfDetailPublisher={etfDetailPublisher}
-        etfDetailData={etfDetailData}
-        etfDetailGeometry={etfDetailGeometry}
-        etfDetailAxisLabels={etfDetailAxisLabels}
-        etfDetailChangeChartModel={etfDetailChangeChartModel}
-        onLoadMoreChange={handleLoadMoreEtfChange}
-      />
+        {etfDetailVisible ? (
+          <EtfDetailDrawer
+            etfDetailVisible={etfDetailVisible}
+            onClose={handleCloseEtfDetail}
+            etfDetailLoading={etfDetailLoading}
+            onRefresh={handleRefreshEtfDetail}
+            etfDetailError={etfDetailError}
+            etfDetailCurrentValue={etfDetailCurrentValue}
+            etfDetailPublisher={etfDetailPublisher}
+            etfDetailData={etfDetailData}
+            etfDetailGeometry={etfDetailGeometry}
+            etfDetailAxisLabels={etfDetailAxisLabels}
+            etfDetailChangeChartModel={etfDetailChangeChartModel}
+            onLoadMoreChange={handleLoadMoreEtfChange}
+          />
+        ) : null}
+      </Suspense>
     </div>
   )
 }

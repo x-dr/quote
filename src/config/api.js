@@ -14,6 +14,9 @@ export const GOLD_WS_API = 'wss://cfws.jdjygold.com/data'
 export const RTJ_SSE_API = import.meta.env.DEV
   ? 'http://192.168.1.35:3000/api/rtj/stream'
   : 'https://jdjyapi.tryxd.cn/api/rtj/stream'
+export const TXQUOTE_SSE_API = import.meta.env.DEV
+  ? 'http://192.168.1.35:3000/api/txquote/stream'
+  : 'https://jdjyapi.tryxd.cn/api/txquote/stream'
 
 export const PRICE_BIZ_TYPE = {
   GOLD: '1',

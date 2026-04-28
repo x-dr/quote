@@ -4,9 +4,9 @@ import {
   DATA_CHART_HEIGHT,
   DATA_CHART_PADDING_X,
   DATA_CHART_WIDTH,
-  SentimentGauge,
   formatDataValue,
 } from '../helpers'
+import SentimentGauge from './SentimentGauge'
 
 const RTJ_CODE_MEANING_MAP = {
   'Ag(T+D)': '白银T+D',
