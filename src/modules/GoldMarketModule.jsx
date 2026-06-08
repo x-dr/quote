@@ -965,7 +965,7 @@ function GoldMarketModule() {
       return fromTicks.slice(-120)
     }
 
-    return buildFallbackSeries(snapshot?.latestPrice ?? 1035.45, 120)
+    return buildFallbackSeries(snapshot?.latestPrice ?? 9999, 120)
   }, [chartSeries, ticks, snapshot?.latestPrice])
 
   const quoteData = useMemo(() => {
