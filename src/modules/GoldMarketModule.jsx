@@ -56,6 +56,16 @@ import './GoldMarketModule.css'
 const ReserveDetailDrawer = lazy(() => import('./goldMarket/components/ReserveDetailDrawer'))
 const EtfDetailDrawer = lazy(() => import('./goldMarket/components/EtfDetailDrawer'))
 
+const GOLD_RTJ_CODES = new Set([
+  'Au(T+D)',
+  'mAu(T+D)',
+  'Au99.99',
+  'GLNC',
+  'XAU',
+  'JZJ_au_PB',
+  'JZJ_au_PS',
+])
+
 function GoldMarketModule() {
   const { message } = App.useApp()
   const clientRef = useRef(null)
@@ -151,8 +161,18 @@ function GoldMarketModule() {
   )
   const etfAxisLabels = useMemo(() => pickAxisLabels(etfChartModel.labels), [etfChartModel.labels])
   const rtjRows = useMemo(() => {
-    const rows = Object.values(rtjQuoteMap || {})
-    const customOrder = ['Au99.99', 'XAU', 'XAG', 'USDCNH', 'XAP', 'XPD']
+    const rows = Object.values(rtjQuoteMap || {}).filter((item) =>
+      GOLD_RTJ_CODES.has(String(item?.code || '')),
+    )
+    const customOrder = [
+      'Au99.99',
+      'Au(T+D)',
+      'mAu(T+D)',
+      'XAU',
+      'GLNC',
+      'JZJ_au_PS',
+      'JZJ_au_PB',
+    ]
     const orderMap = new Map(customOrder.map((code, index) => [code, index]))
 
     const rankCode = (code) => {
@@ -162,11 +182,7 @@ function GoldMarketModule() {
         return [0, orderMap.get(text)]
       }
 
-      if (text.startsWith('JZJ_')) {
-        return [1, text]
-      }
-
-      return [2, text]
+      return [1, text]
     }
 
     rows.sort((left, right) => {

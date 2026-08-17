@@ -10,35 +10,13 @@ import {
 import SentimentGauge from './SentimentGauge'
 
 const RTJ_CODE_MEANING_MAP = {
-  'Ag(T+D)': '白银T+D',
   'Au(T+D)': '黄金T+D',
   'mAu(T+D)': '迷你黄金T+D',
   'Au99.99': '黄金9999',
   GLNC: '伦敦金',
-  SLNC: '伦敦银',
-  PLNC: '伦敦铂',
-  PANC: '伦敦钯',
   XAU: '国际现货黄金',
-  XAG: '国际现货白银',
-  XPD: '国际现货钯金',
-  XAP: '国际现货铂金',
-  'Pt99.95': '铂金9995',
-  RH: '铑金',
-  USDCNH: '美元/人民币汇率',
-  JZJ_ag_PB: '白银回购价',
-  JZJ_ag_PS: '白银销售价',
   JZJ_au_PB: '黄金回购价',
   JZJ_au_PS: '黄金销售价',
-  JZJ_pt_PB: '铂金回购价',
-  JZJ_pt_PS: '铂金销售价',
-  JZJ_pd_PB: '钯金回购价',
-  JZJ_pd_PS: '钯金销售价',
-  JZJ_IR_PB: '铱回购价',
-  JZJ_IR_PS: '铱销售价',
-  JZJ_RU_PB: '钌回购价',
-  JZJ_RU_PS: '钌销售价',
-  RH_JZL_PB: '铑回购价',
-  RH_JZL_PS: '铑销售价',
 }
 
 function BoardSection({

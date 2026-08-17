@@ -1,60 +1,48 @@
-import { Suspense, startTransition, useCallback, useMemo, useState } from 'react'
-import { Segmented, Typography } from 'antd'
+import { lazy, Suspense } from 'react'
+import { Typography } from 'antd'
 import ModuleErrorBoundary from './components/ModuleErrorBoundary'
-import { marketModules } from './modules/registry'
 import './App.css'
 
+const GoldMarketModule = lazy(() => import('./modules/GoldMarketModule'))
+
 function App() {
-  const [activeModuleKey, setActiveModuleKey] = useState('gold')
-
-  const activeModule = useMemo(
-    () => marketModules.find((module) => module.key === activeModuleKey) || marketModules[0],
-    [activeModuleKey],
-  )
-
-  const ActiveModuleComponent = activeModule.component
-
-  const moduleOptions = useMemo(
-    () =>
-      marketModules.map((module) => {
-        return {
-          value: module.key,
-          label: module.title,
-        }
-      }),
-    [],
-  )
-
-  const handleModuleChange = useCallback((value) => {
-    const nextModule = marketModules.find((module) => module.key === value)
-    nextModule?.load?.()
-
-    startTransition(() => {
-      setActiveModuleKey(value)
-    })
-  }, [])
-
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        跳至行情内容
+      </a>
       <div className="mobile-shell">
         <header className="mobile-header">
-          <Typography.Title level={3} className="mobile-title">
-            {activeModule.title}
-          </Typography.Title>
-          <Typography.Text type="secondary" className="mobile-subtitle">
-            {activeModule.subtitle}
-          </Typography.Text>
-          <Segmented
-            className="module-switch"
-            block
-            value={activeModuleKey}
-            options={moduleOptions}
-            onChange={handleModuleChange}
-          />
+          <div className="market-brand-row">
+            <div className="market-brand">
+              <span className="market-brand-symbol" aria-hidden="true">J</span>
+              <span className="market-brand-name">JDJY <em>MARKET</em></span>
+            </div>
+            <div className="market-source-status">
+              <span aria-hidden="true" />
+              多源行情聚合
+            </div>
+          </div>
+
+          <div className="market-heading-row">
+            <div>
+              <span className="market-eyebrow">GOLD MARKET OVERVIEW</span>
+              <Typography.Title level={1} className="mobile-title">
+                黄金行情
+              </Typography.Title>
+              <Typography.Text className="mobile-subtitle">
+                实时金价、K 线与黄金市场数据
+              </Typography.Text>
+            </div>
+            <div className="market-heading-meta" aria-label="产品特性">
+              <span>实时更新</span>
+              <span>多端适配</span>
+            </div>
+          </div>
         </header>
 
         <main className="mobile-content" id="main-content">
-          <ModuleErrorBoundary resetKey={activeModuleKey}>
+          <ModuleErrorBoundary resetKey="gold">
             <Suspense
               fallback={
                 <div className="module-loading" role="status" aria-live="polite">
@@ -63,10 +51,15 @@ function App() {
                 </div>
               }
             >
-              <ActiveModuleComponent title={activeModule.title} subtitle={activeModule.subtitle} />
+              <GoldMarketModule />
             </Suspense>
           </ModuleErrorBoundary>
         </main>
+
+        <footer className="app-footer">
+          <span>行情数据仅供参考，不构成任何投资建议</span>
+          <span>© {new Date().getFullYear()} JDJY Market</span>
+        </footer>
       </div>
     </div>
   )

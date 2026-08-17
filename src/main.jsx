@@ -10,12 +10,12 @@ createRoot(document.getElementById('root')).render(
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#1b61c9',
+          colorPrimary: '#1f5aa6',
           borderRadius: 12,
           colorBgLayout: 'transparent',
-          colorText: '#181d26',
-          colorTextSecondary: 'rgba(4, 14, 32, 0.69)',
-          colorBorder: '#e0e2e6',
+          colorText: '#172033',
+          colorTextSecondary: 'rgba(18, 32, 52, 0.66)',
+          colorBorder: '#dfe4ea',
           colorBgContainer: '#ffffff',
           fontFamily: "'Haas',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif",
         },
@@ -26,11 +26,6 @@ createRoot(document.getElementById('root')).render(
           },
           Button: {
             borderRadius: 12,
-          },
-          Segmented: {
-            trackBg: '#f8fafc',
-            itemSelectedBg: '#ffffff',
-            itemSelectedColor: '#181d26',
           },
         },
       }}
