@@ -25,10 +25,11 @@ npm install
 ### 2. 本地开发
 
 ```bash
+cp .env.example .env.local
 npm run dev
 ```
 
-默认监听 `0.0.0.0`，便于局域网设备访问。
+按本机代理地址调整 `.env.local` 后启动。开发服务器默认监听 `0.0.0.0`，便于局域网设备访问。
 
 ### 3. 构建与预览
 
@@ -37,9 +38,10 @@ npm run build
 npm run preview
 ```
 
-### 4. 代码检查
+### 4. 质量检查
 
 ```bash
+npm run test
 npm run lint
 ```
 
@@ -55,12 +57,10 @@ src/
 
 ## 接口与数据源说明
 
-- REST 网关 API 在 `src/config/api.js` 配置
-- 当前默认通过本地代理访问：
-	- `BASE_API`: `http://127.0.0.1:3000/api/jdjy`
-	- `STOCK_API`: `http://127.0.0.1:3000/proxy`
-- 黄金实时 WS：`wss://cfws.jdjygold.com/data`
-- 股票实时 SSE：`/api/txquote/stream`
+- REST、SSE 与 WebSocket 地址统一在 `src/config/api.js` 管理
+- 可通过 `.env.local` 中的 `VITE_*` 变量覆盖，完整示例见 `.env.example`
+- 黄金实时 WS 默认使用 `wss://cfws.jdjygold.com/data`
+- 网关请求默认 15 秒超时，调用方也可传入 `timeout` 或 `signal`
 
 ## 技术栈
 

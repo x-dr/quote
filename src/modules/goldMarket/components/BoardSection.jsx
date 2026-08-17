@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Alert, Card, Segmented, Select, Spin, Table, Typography } from 'antd'
 import {
   BOARD_OPTIONS,
@@ -197,7 +198,13 @@ function BoardSection({
                   <Typography.Paragraph className="sentiment-title">{entry.title}</Typography.Paragraph>
                   {entry.imageUrl ? (
                     <a href={entry.jumpUrl || entry.imageUrl} target="_blank" rel="noreferrer">
-                      <img className="sentiment-image" src={entry.imageUrl} alt={entry.title} />
+                      <img
+                        className="sentiment-image"
+                        src={entry.imageUrl}
+                        alt={entry.title}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </a>
                   ) : null}
                   {entry.gauges.length ? (
@@ -427,4 +434,4 @@ function BoardSection({
   )
 }
 
-export default BoardSection
+export default memo(BoardSection)

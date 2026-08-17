@@ -11,17 +11,19 @@
 
 ## 1. 基础信息
 
-- 基础域名（本地代理）
-  - `BASE_API`: `http://127.0.0.1:3000/api/jdjy`
-  - `STRATEGY_API_URL`: `http://127.0.0.1:3000/api/jdjy`
-  - `VITE_HOME_FEED_API`: `http://127.0.0.1:3000/api/jdjy`
-  - `STOCK_API`: `http://127.0.0.1:3000/proxy`
-- 实时流地址
-  - `RTJ_SSE_API`: `http://192.168.1.35:3000/api/rtj/stream`
-  - `TXQUOTE_SSE_API`: `http://192.168.1.35:3000/api/txquote/stream`
+- 接口地址由 `src/config/api.js` 统一管理，可通过以下环境变量覆盖：
+  - `VITE_BASE_API`
+  - `VITE_STRATEGY_API`
+  - `VITE_HOME_FEED_API`
+  - `VITE_STOCK_API`
+  - `VITE_GOLD_WS_API`
+  - `VITE_RTJ_SSE_API`
+  - `VITE_TXQUOTE_SSE_API`
+- 本地配置示例见项目根目录 `.env.example`
 - 请求方法：`POST`
 - 请求头：`Content-Type: application/x-www-form-urlencoded;charset=UTF-8`
 - 认证信息：`credentials: include`（会携带 Cookie）
+- 默认请求超时：15 秒
 
 ## 2. 通用请求格式
 

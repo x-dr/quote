@@ -1,5 +1,6 @@
 import { Suspense, startTransition, useCallback, useMemo, useState } from 'react'
 import { Segmented, Typography } from 'antd'
+import ModuleErrorBoundary from './components/ModuleErrorBoundary'
 import { marketModules } from './modules/registry'
 import './App.css'
 
@@ -35,14 +36,10 @@ function App() {
 
   return (
     <div className="app-shell">
-      {/* <div className="ambient-shape shape-1"></div>
-      <div className="ambient-shape shape-2"></div> */}
-
       <div className="mobile-shell">
         <header className="mobile-header">
-          {/* <Typography.Text className="mobile-brand">Quote Forge</Typography.Text> */}
           <Typography.Title level={3} className="mobile-title">
-            {activeModule.title} 
+            {activeModule.title}
           </Typography.Title>
           <Typography.Text type="secondary" className="mobile-subtitle">
             {activeModule.subtitle}
@@ -56,10 +53,19 @@ function App() {
           />
         </header>
 
-        <main className="mobile-content">
-          <Suspense fallback={<div className="module-loading">模块加载中...</div>}>
-            <ActiveModuleComponent title={activeModule.title} subtitle={activeModule.subtitle} />
-          </Suspense>
+        <main className="mobile-content" id="main-content">
+          <ModuleErrorBoundary resetKey={activeModuleKey}>
+            <Suspense
+              fallback={
+                <div className="module-loading" role="status" aria-live="polite">
+                  <span className="module-loading-spinner" aria-hidden="true" />
+                  模块加载中…
+                </div>
+              }
+            >
+              <ActiveModuleComponent title={activeModule.title} subtitle={activeModule.subtitle} />
+            </Suspense>
+          </ModuleErrorBoundary>
         </main>
       </div>
     </div>

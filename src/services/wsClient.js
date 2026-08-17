@@ -1,4 +1,4 @@
-import { GOLD_WS_API, PRICE_BIZ_TYPE } from '../config/api'
+import { GOLD_WS_API, PRICE_BIZ_TYPE } from '../config/api.js'
 
 const WS_STATUS = {
   DISCONNECTED: 'disconnected',
@@ -21,6 +21,7 @@ export class QuoteWebSocketClient {
   constructor(options = {}) {
     this.url = options.url || GOLD_WS_API
     this.reconnectInterval = options.reconnectInterval || 1500
+    this.maxReconnectInterval = options.maxReconnectInterval || 30000
     this.maxReconnectAttempts = options.maxReconnectAttempts || 50
     this.heartbeatInterval = options.heartbeatInterval || 10000
 
@@ -52,30 +53,53 @@ export class QuoteWebSocketClient {
 
   connect() {
     if (
-      this.status === WS_STATUS.CONNECTED ||
-      this.status === WS_STATUS.CONNECTING ||
-      this.status === WS_STATUS.RECONNECTING
+      this.socket?.readyState === WebSocket.OPEN ||
+      this.socket?.readyState === WebSocket.CONNECTING
     ) {
       return
     }
 
     this.manualClose = false
+    this.clearReconnect()
     this.setStatus(this.reconnectAttempts > 0 ? WS_STATUS.RECONNECTING : WS_STATUS.CONNECTING)
 
-    this.socket = new WebSocket(this.url)
+    let socket
 
-    this.socket.addEventListener('open', () => {
+    try {
+      socket = new WebSocket(this.url)
+    } catch {
+      this.setStatus(WS_STATUS.DISCONNECTED)
+      this.scheduleReconnect()
+      return
+    }
+
+    this.socket = socket
+
+    socket.addEventListener('open', () => {
+      if (this.socket !== socket) {
+        return
+      }
+
       this.reconnectAttempts = 0
       this.setStatus(WS_STATUS.CONNECTED)
       this.startHeartbeat()
       this.resubscribeAll()
     })
 
-    this.socket.addEventListener('message', (event) => {
+    socket.addEventListener('message', (event) => {
+      if (this.socket !== socket) {
+        return
+      }
+
       this.handleMessage(event.data)
     })
 
-    this.socket.addEventListener('close', () => {
+    socket.addEventListener('close', () => {
+      if (this.socket !== socket) {
+        return
+      }
+
+      this.socket = null
       this.stopHeartbeat()
       this.setStatus(WS_STATUS.DISCONNECTED)
 
@@ -84,8 +108,10 @@ export class QuoteWebSocketClient {
       }
     })
 
-    this.socket.addEventListener('error', () => {
-      this.socket?.close()
+    socket.addEventListener('error', () => {
+      if (this.socket === socket) {
+        socket.close()
+      }
     })
   }
 
@@ -94,13 +120,15 @@ export class QuoteWebSocketClient {
     this.clearReconnect()
     this.stopHeartbeat()
 
-    if (this.socket) {
+    const socket = this.socket
+    this.socket = null
+
+    if (socket) {
       try {
-        this.socket.close(1000, 'manual close')
+        socket.close(1000, 'manual close')
       } catch {
         // ignore
       }
-      this.socket = null
     }
 
     this.setStatus(WS_STATUS.DISCONNECTED)
@@ -122,15 +150,23 @@ export class QuoteWebSocketClient {
   }
 
   scheduleReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+    if (this.manualClose || this.reconnectAttempts >= this.maxReconnectAttempts) {
       return
     }
 
     this.clearReconnect()
+    this.setStatus(WS_STATUS.RECONNECTING)
+
+    const delay = Math.min(
+      this.reconnectInterval * 2 ** this.reconnectAttempts,
+      this.maxReconnectInterval,
+    )
+
     this.reconnectTimer = window.setTimeout(() => {
+      this.reconnectTimer = null
       this.reconnectAttempts += 1
       this.connect()
-    }, this.reconnectInterval)
+    }, delay)
   }
 
   clearReconnect() {

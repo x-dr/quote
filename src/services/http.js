@@ -2,6 +2,8 @@ const DEFAULT_HEADERS = {
   'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
 }
 
+const DEFAULT_TIMEOUT_MS = 15000
+
 const stringifyReqData = (payload = {}) =>
   new URLSearchParams({
     reqData: JSON.stringify(payload),
@@ -34,31 +36,67 @@ const normalizeGatewayError = (data, fallbackMessage = '请求失败') => {
 }
 
 export const gwPost = async (url, params = {}, options = {}) => {
-  const { verifyResponse = true, signal } = options
+  const { verifyResponse = true, signal, timeout = DEFAULT_TIMEOUT_MS } = options
+  const requestController = new AbortController()
+  let didTimeout = false
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: DEFAULT_HEADERS,
-    credentials: 'include',
-    body: stringifyReqData(params),
-    signal,
-  })
-
-  const data = await parseJsonSafe(response)
-
-  if (!response.ok) {
-    throw new Error(normalizeGatewayError(data, `HTTP ${response.status}`))
+  const abortFromCaller = () => {
+    requestController.abort(signal?.reason)
   }
 
-  if (!verifyResponse) {
-    return data
+  if (signal?.aborted) {
+    abortFromCaller()
+  } else {
+    signal?.addEventListener('abort', abortFromCaller, { once: true })
   }
 
-  if (data?.resultCode === 0) {
-    return data.resultData
-  }
+  const timeoutId = timeout > 0
+    ? globalThis.setTimeout(() => {
+        didTimeout = true
+        requestController.abort()
+      }, timeout)
+    : null
 
-  throw new Error(normalizeGatewayError(data, '网关返回错误'))
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      credentials: 'include',
+      body: stringifyReqData(params),
+      signal: requestController.signal,
+    })
+
+    const data = await parseJsonSafe(response)
+
+    if (!response.ok) {
+      throw new Error(normalizeGatewayError(data, `HTTP ${response.status}`))
+    }
+
+    if (!verifyResponse) {
+      return data
+    }
+
+    if (data?.resultCode === 0) {
+      return data.resultData
+    }
+
+    throw new Error(normalizeGatewayError(data, '网关返回错误'))
+  } catch (error) {
+    if (didTimeout) {
+      throw new Error(`请求超时（${timeout}ms）`, { cause: error })
+    }
+
+    if (error instanceof TypeError) {
+      throw new Error('网络请求失败，请检查服务或网络连接', { cause: error })
+    }
+
+    throw error
+  } finally {
+    if (timeoutId !== null) {
+      globalThis.clearTimeout(timeoutId)
+    }
+    signal?.removeEventListener('abort', abortFromCaller)
+  }
 }
 
 export const request = async ({ url, method = 'post', rData = {}, ...options }) => {

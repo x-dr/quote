@@ -267,14 +267,16 @@ function GoldMarketModule() {
         return
       }
 
-      setExternalQuoteMap((previous) => ({
-        ...previous,
-        [packet.key]: {
-          ...(previous[packet.key] || {}),
-          ...normalized,
-          source: 'ws',
-        },
-      }))
+      if (packet.key === QUOTE_KEYS.LONDON || packet.key === QUOTE_KEYS.GOLD_9999) {
+        setExternalQuoteMap((previous) => ({
+          ...previous,
+          [packet.key]: {
+            ...(previous[packet.key] || {}),
+            ...normalized,
+            source: 'ws',
+          },
+        }))
+      }
 
       if (packet?.key !== wsPrimaryKey) {
         return
@@ -912,7 +914,9 @@ function GoldMarketModule() {
     }
 
     const timerId = setInterval(() => {
-      void fetchTimeIncremental()
+      if (!document.hidden) {
+        void fetchTimeIncremental()
+      }
     }, TIME_INCREMENT_INTERVAL_MS)
 
     return () => {
@@ -926,7 +930,9 @@ function GoldMarketModule() {
     }
 
     const timerId = setInterval(() => {
-      void fetchDayIncremental()
+      if (!document.hidden) {
+        void fetchDayIncremental()
+      }
     }, DAY_INCREMENT_INTERVAL_MS)
 
     return () => {
@@ -940,7 +946,9 @@ function GoldMarketModule() {
     }
 
     const timerId = setInterval(() => {
-      void fetchMinKlineIncremental()
+      if (!document.hidden) {
+        void fetchMinKlineIncremental()
+      }
     }, MIN_KLINE_INCREMENT_INTERVAL_MS)
 
     return () => {

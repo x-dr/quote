@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { Alert, Card, Col, Empty, Row, Tag, Typography } from 'antd'
 import { TXQUOTE_SSE_API } from '../config/api'
 import './StockMarketModule.css'
@@ -33,6 +33,22 @@ const QUOTE_DECIMAL_MAP = {
   cn: 2,
   hk: 2,
   us: 2,
+}
+
+const NUMBER_FORMATTERS = new Map()
+
+function getNumberFormatter(digits) {
+  if (!NUMBER_FORMATTERS.has(digits)) {
+    NUMBER_FORMATTERS.set(
+      digits,
+      new Intl.NumberFormat('zh-CN', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      }),
+    )
+  }
+
+  return NUMBER_FORMATTERS.get(digits)
 }
 
 function toNumberOrNull(value) {
@@ -244,10 +260,7 @@ function formatNumber(value, digits = 2) {
     return '--'
   }
 
-  return new Intl.NumberFormat('zh-CN', {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(value)
+  return getNumberFormatter(digits).format(value)
 }
 
 function formatSignedNumber(value, digits = 2) {
@@ -353,16 +366,16 @@ function buildSections(orderedQuotes) {
   }))
 }
 
-function SummaryMetric({ label, value }) {
+const SummaryMetric = memo(function SummaryMetric({ label, value }) {
   return (
     <div className="stock-summary-metric">
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
   )
-}
+})
 
-function StockQuoteCard({ quote }) {
+const StockQuoteCard = memo(function StockQuoteCard({ quote }) {
   const trend = getTrend(quote.change)
   const priceDigits = QUOTE_DECIMAL_MAP[quote.marketKey] || 2
 
@@ -375,7 +388,7 @@ function StockQuoteCard({ quote }) {
           </Typography.Title>
           <Typography.Text className="stock-quote-symbol">{quote.symbol}</Typography.Text>
         </div>
-        <Tag bordered={false} className="stock-market-tag">
+        <Tag variant="filled" className="stock-market-tag">
           {quote.currency}
         </Tag>
       </div>
@@ -407,7 +420,7 @@ function StockQuoteCard({ quote }) {
       </div>
     </Card>
   )
-}
+})
 
 function StockMarketModule() {
   const [quoteMap, setQuoteMap] = useState({})
@@ -553,7 +566,7 @@ function StockMarketModule() {
             style={{ marginTop: 16 }}
             type="warning"
             showIcon
-            message={error}
+            title={error}
           />
         ) : null}
 

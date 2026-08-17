@@ -1,22 +1,28 @@
-// export const BASE_API = 'https://api.jdjygold.com'
-// export const STRATEGY_API_URL = 'https://api.jdjygold.com'
-// export const VITE_HOME_FEED_API = 'https://api.jdjygold.com'
-// export const STOCK_API = 'https://quoteapi.jd.com'
-const DEVAPI = 'http://192.168.1.35:3000/api/jdjy'
-const PRODAPI = 'https://jdjyapi.tryxd.cn/api/jdjy'
+const env = import.meta.env || {}
+const DEV_API = 'http://192.168.1.35:3000/api/jdjy'
+const PROD_API = 'https://jdjyapi.tryxd.cn/api/jdjy'
+const defaultApi = env.DEV ? DEV_API : PROD_API
 
-export const BASE_API = import.meta.env.DEV ? DEVAPI : PRODAPI
-export const STRATEGY_API_URL = import.meta.env.DEV ? DEVAPI : PRODAPI
-export const VITE_HOME_FEED_API = import.meta.env.DEV ? DEVAPI : PRODAPI
-export const STOCK_API = 'http://127.0.0.1:3000/proxy'
+const endpoint = (value, fallback) => String(value || fallback).replace(/\/+$/, '')
 
-export const GOLD_WS_API = 'wss://cfws.jdjygold.com/data'
-export const RTJ_SSE_API = import.meta.env.DEV
-  ? 'http://192.168.1.35:3000/api/rtj/stream'
-  : 'https://jdjyapi.tryxd.cn/api/rtj/stream'
-export const TXQUOTE_SSE_API = import.meta.env.DEV
-  ? 'http://192.168.1.35:3000/api/txquote/stream'
-  : 'https://jdjyapi.tryxd.cn/api/txquote/stream'
+export const BASE_API = endpoint(env.VITE_BASE_API, defaultApi)
+export const STRATEGY_API_URL = endpoint(env.VITE_STRATEGY_API, BASE_API)
+export const VITE_HOME_FEED_API = endpoint(env.VITE_HOME_FEED_API, BASE_API)
+export const STOCK_API = endpoint(env.VITE_STOCK_API, 'http://127.0.0.1:3000/proxy')
+
+export const GOLD_WS_API = endpoint(env.VITE_GOLD_WS_API, 'wss://cfws.jdjygold.com/data')
+export const RTJ_SSE_API = endpoint(
+  env.VITE_RTJ_SSE_API,
+  env.DEV
+    ? 'http://192.168.1.35:3000/api/rtj/stream'
+    : 'https://jdjyapi.tryxd.cn/api/rtj/stream',
+)
+export const TXQUOTE_SSE_API = endpoint(
+  env.VITE_TXQUOTE_SSE_API,
+  env.DEV
+    ? 'http://192.168.1.35:3000/api/txquote/stream'
+    : 'https://jdjyapi.tryxd.cn/api/txquote/stream',
+)
 
 export const PRICE_BIZ_TYPE = {
   GOLD: '1',

@@ -48,15 +48,6 @@ function textOf(node, tagName) {
   return typeof text === 'string' ? text.trim() : ''
 }
 
-function toNumberOrNull(value) {
-  if (value === null || value === undefined || value === '') {
-    return null
-  }
-
-  const numeric = Number(value)
-  return Number.isFinite(numeric) ? numeric : null
-}
-
 function formatRate(value) {
   if (value === null || value === undefined || value === '') {
     return '--'
@@ -67,7 +58,7 @@ function formatRate(value) {
     return '--'
   }
 
-  const [_, decimalPart = ''] = String(value).split('.')
+  const decimalPart = String(value).split('.')[1] || ''
   const decimalCount = Math.min(Math.max(decimalPart.length, 2), 6)
 
   return new Intl.NumberFormat('zh-CN', {
@@ -310,15 +301,31 @@ function FxMarketModule() {
 
   useEffect(() => {
     mountedRef.current = true
-    loadData()
+
+    const initialTimer = window.setTimeout(() => {
+      void loadData()
+    }, 0)
 
     const timer = window.setInterval(() => {
-      loadData({ silent: true })
+      if (!document.hidden) {
+        void loadData({ silent: true })
+      }
     }, REFRESH_INTERVAL_MS)
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void loadData({ silent: true })
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       mountedRef.current = false
+      requestIdRef.current += 1
+      window.clearTimeout(initialTimer)
       window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [loadData])
 
@@ -497,7 +504,7 @@ function FxMarketModule() {
             style={{ marginTop: 12 }}
             type="warning"
             showIcon
-            message="部分接口请求失败"
+            title="部分接口请求失败"
             description={errors.join('；')}
           />
         ) : null}

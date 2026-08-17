@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { formatPrice } from '../helpers'
 
 function SentimentGauge({ name, bull, bear }) {
@@ -20,4 +21,4 @@ function SentimentGauge({ name, bull, bear }) {
   )
 }
 
-export default SentimentGauge
+export default memo(SentimentGauge)
