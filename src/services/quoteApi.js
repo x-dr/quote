@@ -2,8 +2,8 @@ import {
   BASE_API,
   STRATEGY_API_URL,
   VITE_HOME_FEED_API,
-} from '../config/api'
-import { gwPost, request } from './http'
+} from '../config/api.js'
+import { gwPost, request } from './http.js'
 
 export const queryStallNew = (query) =>
   request({

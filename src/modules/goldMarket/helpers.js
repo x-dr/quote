@@ -3,8 +3,8 @@ import {
   cfGetKlineInfo,
   cfGetMinKlineInfo,
   getRangeTimeSharingDotsByNums,
-} from '../../services/quoteApi'
-import { WS_STATUS } from '../../services/wsClient'
+} from '../../services/quoteApi.js'
+import { WS_STATUS } from '../../services/wsClient.js'
 
 export const CHART_WIDTH = 680
 export const CHART_HEIGHT = 300
@@ -798,6 +798,7 @@ const buildKlineMarker = (candle, value, y) => {
 
   return {
     value,
+    label: candle.label || '--',
     x: candle.x,
     y,
     lineX,

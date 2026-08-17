@@ -296,6 +296,12 @@
   stroke-linejoin: round;
 }
 
+.kline-extreme text .kline-extreme-date {
+  fill: var(--theme_text-weak);
+  font-size: 9px;
+  font-weight: 500;
+}
+
 .kline-crosshair line {
   stroke: rgba(76, 82, 92, 0.46);
   stroke-width: 1;

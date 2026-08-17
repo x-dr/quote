@@ -289,10 +289,13 @@ function QuotePanel({
                       <line x1={marker.x} y1={marker.y} x2={marker.lineX} y2={marker.y} />
                       <text
                         x={marker.textX}
-                        y={marker.y - 5}
+                        y={marker.y - 14}
                         textAnchor={marker.textAnchor}
                       >
-                        {formatPrice(marker.value)}
+                        <tspan x={marker.textX}>{formatPrice(marker.value)}</tspan>
+                        <tspan className="kline-extreme-date" x={marker.textX} dy="11">
+                          {marker.label}
+                        </tspan>
                       </text>
                     </g>
                   ))}
