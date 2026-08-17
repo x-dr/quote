@@ -75,9 +75,9 @@ reqData={"uniqueCode":"WG-JDAU"}
 
 ### 3.2 K 线
 
-- 日 K：`cfGetKlineInfo`
+- 日/周/月 K：`cfGetKlineInfo`（`type` 分别为 1/2/3）
 - 分钟 K：`cfGetMinKlineInfo`
-- 支持周期：1、5、15、30、60、120 分钟
+- 支持周期：1、5、15、30、60、120 分钟，以及日、周、月 K
 - 页面会按时间戳合并首屏数据与增量数据
 
 ### 3.3 央行储备与 ETF

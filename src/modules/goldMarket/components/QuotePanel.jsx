@@ -5,7 +5,7 @@ import {
   CHART_HEIGHT,
   CHART_PADDING_X,
   CHART_WIDTH,
-  MORE_MIN_TIMEFRAME_OPTIONS,
+  MORE_TIMEFRAME_OPTIONS,
   TIMEFRAME_OPTIONS,
   formatPrice,
   formatSigned,
@@ -160,7 +160,7 @@ function QuotePanel({
               size="small"
               className="more-timeframe-select"
               value={moreTimeframe}
-              options={MORE_MIN_TIMEFRAME_OPTIONS}
+              options={MORE_TIMEFRAME_OPTIONS}
               onChange={handleMoreTimeframeChange}
               variant="filled"
             />

@@ -63,6 +63,12 @@ export const MIN_KLINE_TIMEFRAME_TYPE_MAP = {
   m120: 120,
 }
 
+export const DATE_KLINE_TIMEFRAME_TYPE_MAP = {
+  day: 1,
+  week: 2,
+  month: 3,
+}
+
 export const TIMEFRAME_OPTIONS = [
   { label: '分时', value: 'time' },
   { label: '日K', value: 'day' },
@@ -72,10 +78,12 @@ export const TIMEFRAME_OPTIONS = [
   { label: '更多', value: 'more' },
 ]
 
-export const MORE_MIN_TIMEFRAME_OPTIONS = [
+export const MORE_TIMEFRAME_OPTIONS = [
   { label: '30分', value: 'm30' },
   { label: '60分', value: 'm60' },
   { label: '120分', value: 'm120' },
+  { label: '周K', value: 'week' },
+  { label: '月K', value: 'month' },
 ]
 
 export const BOARD_OPTIONS = [
@@ -100,11 +108,16 @@ export const TIMEFRAME_LABEL_MAP = {
   m30: '30分',
   m60: '60分',
   m120: '120分',
+  week: '周K',
+  month: '月K',
   more: '更多',
 }
 
 export const isMinKlineTimeframe = (timeframe) =>
   Object.prototype.hasOwnProperty.call(MIN_KLINE_TIMEFRAME_TYPE_MAP, timeframe)
+
+export const isDateKlineTimeframe = (timeframe) =>
+  Object.prototype.hasOwnProperty.call(DATE_KLINE_TIMEFRAME_TYPE_MAP, timeframe)
 
 export const getStatusMeta = (status) => {
   if (status === WS_STATUS.CONNECTED) {
@@ -391,6 +404,17 @@ export const normalizeDateTimeValue = (value) => {
   return null
 }
 
+const getLocalDateKey = (date = new Date()) =>
+  `${date.getFullYear()}${padTwo(date.getMonth() + 1)}${padTwo(date.getDate())}`
+
+const formatIntradayAxisLabel = (dateKey, monthDay, clock) => {
+  if (dateKey && dateKey !== getLocalDateKey()) {
+    return `${monthDay} ${clock}`
+  }
+
+  return clock
+}
+
 export const formatAxisLabel = (value, timeframe) => {
   if (value === null || value === undefined || value === '') {
     return '--'
@@ -399,11 +423,17 @@ export const formatAxisLabel = (value, timeframe) => {
   const text = String(value).trim()
 
   if (/^\d{14}$/.test(text)) {
-    if (timeframe === 'day') {
-      return `${text.slice(4, 6)}-${text.slice(6, 8)}`
+    const monthDay = `${text.slice(4, 6)}-${text.slice(6, 8)}`
+    if (isDateKlineTimeframe(timeframe)) {
+      return monthDay
     }
 
-    return `${text.slice(8, 10)}:${text.slice(10, 12)}`
+    const clock = `${text.slice(8, 10)}:${text.slice(10, 12)}`
+    if (isMinKlineTimeframe(timeframe)) {
+      return formatIntradayAxisLabel(text.slice(0, 8), monthDay, clock)
+    }
+
+    return clock
   }
 
   if (/^\d{8}$/.test(text)) {
@@ -412,21 +442,33 @@ export const formatAxisLabel = (value, timeframe) => {
 
   if (text.includes(' ')) {
     const [dateText, timeText = ''] = text.split(' ')
-    if (timeframe === 'day') {
-      return dateText.slice(5)
+    const monthDay = dateText.slice(5)
+    if (isDateKlineTimeframe(timeframe)) {
+      return monthDay
     }
 
-    return timeText.slice(0, 5) || dateText.slice(5)
+    const clock = timeText.slice(0, 5)
+    if (isMinKlineTimeframe(timeframe) && clock) {
+      return formatIntradayAxisLabel(dateText.replaceAll('-', ''), monthDay, clock)
+    }
+
+    return clock || monthDay
   }
 
   const parsedTime = toTimestamp(text)
   if (parsedTime) {
     const date = new Date(parsedTime)
-    if (timeframe === 'day') {
-      return `${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}`
+    const monthDay = `${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}`
+    if (isDateKlineTimeframe(timeframe)) {
+      return monthDay
     }
 
-    return `${padTwo(date.getHours())}:${padTwo(date.getMinutes())}`
+    const clock = `${padTwo(date.getHours())}:${padTwo(date.getMinutes())}`
+    if (isMinKlineTimeframe(timeframe)) {
+      return formatIntradayAxisLabel(getLocalDateKey(date), monthDay, clock)
+    }
+
+    return clock
   }
 
   return text
@@ -631,12 +673,12 @@ export const buildTimeframeRequestPlan = (timeframe, chartUCode) => {
     ]
   }
 
-  if (timeframe === 'day') {
+  if (isDateKlineTimeframe(timeframe)) {
     return [
       {
         fetcher: () =>
           cfGetKlineInfo({
-            type: 1,
+            type: DATE_KLINE_TIMEFRAME_TYPE_MAP[timeframe],
             fq: 1,
             uCode: chartUCode,
           }),

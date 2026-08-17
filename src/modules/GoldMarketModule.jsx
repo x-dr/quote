@@ -14,6 +14,7 @@ import {
 import { QuoteWebSocketClient, WS_STATUS } from '../services/wsClient'
 import {
   DAY_INCREMENT_INTERVAL_MS,
+  DATE_KLINE_TIMEFRAME_TYPE_MAP,
   DEFAULT_CHART_UCODE,
   DEFAULT_PRIMARY_WS_KEY,
   FIXED_WS_QUOTE_KEYS,
@@ -39,6 +40,7 @@ import {
   formatDateForApi,
   getStatusMeta,
   getTrendClass,
+  isDateKlineTimeframe,
   isMinKlineTimeframe,
   mergeRowsByTimestamp,
   normalizeChartRows,
@@ -76,7 +78,7 @@ function GoldMarketModule() {
   const snapshotRequestRef = useRef(0)
   const chartRequestRef = useRef(0)
   const timeSeriesRowsRef = useRef([])
-  const daySeriesRowsRef = useRef([])
+  const dateKlineSeriesRowsRef = useRef([])
   const minKlineSeriesRowsRef = useRef([])
 
   const [productSku, setProductSku] = useState(GOLD_SKU_OPTIONS[0].value)
@@ -253,7 +255,7 @@ function GoldMarketModule() {
     setSnapshotError('')
     setChartError('')
     timeSeriesRowsRef.current = []
-    daySeriesRowsRef.current = []
+    dateKlineSeriesRowsRef.current = []
     minKlineSeriesRowsRef.current = []
   }, [])
 
@@ -612,19 +614,19 @@ function GoldMarketModule() {
 
               if (activeTimeframe === 'time') {
                 timeSeriesRowsRef.current = normalizedRows
-                daySeriesRowsRef.current = []
+                dateKlineSeriesRowsRef.current = []
                 minKlineSeriesRowsRef.current = []
-              } else if (activeTimeframe === 'day') {
-                daySeriesRowsRef.current = normalizedRows
+              } else if (isDateKlineTimeframe(activeTimeframe)) {
+                dateKlineSeriesRowsRef.current = normalizedRows
                 timeSeriesRowsRef.current = []
                 minKlineSeriesRowsRef.current = []
               } else if (isMinKlineTimeframe(activeTimeframe)) {
                 minKlineSeriesRowsRef.current = normalizedRows
                 timeSeriesRowsRef.current = []
-                daySeriesRowsRef.current = []
+                dateKlineSeriesRowsRef.current = []
               } else {
                 timeSeriesRowsRef.current = []
-                daySeriesRowsRef.current = []
+                dateKlineSeriesRowsRef.current = []
                 minKlineSeriesRowsRef.current = []
               }
 
@@ -698,35 +700,35 @@ function GoldMarketModule() {
     }
   }, [activeTimeframe, chartUCode])
 
-  const fetchDayIncremental = useCallback(async () => {
-    if (activeTimeframe !== 'day') {
+  const fetchDateKlineIncremental = useCallback(async () => {
+    if (!isDateKlineTimeframe(activeTimeframe)) {
       return
     }
 
     try {
       const response = await cfGetKlineInfo({
-        type: 1,
+        type: DATE_KLINE_TIMEFRAME_TYPE_MAP[activeTimeframe],
         fq: 1,
         uCode: chartUCode,
         count: 100,
         date: buildRequestDate(),
       })
 
-      const incomingRows = parseKlineRows(response, 'day')
+      const incomingRows = parseKlineRows(response, activeTimeframe)
       if (!incomingRows.length) {
         return
       }
 
-      const mergedRows = mergeRowsByTimestamp(daySeriesRowsRef.current, incomingRows)
+      const mergedRows = mergeRowsByTimestamp(dateKlineSeriesRowsRef.current, incomingRows)
       const model = toChartSeriesModel(mergedRows)
 
-      daySeriesRowsRef.current = mergedRows
+      dateKlineSeriesRowsRef.current = mergedRows
       setChartSeries(model.series)
       setChartLabels(model.labels)
       setChartRows(mergedRows)
       setChartError('')
     } catch {
-      // 日K增量失败时静默，不覆盖首屏已加载数据
+      // 日/周/月 K 增量失败时静默，不覆盖首屏已加载数据
     }
   }, [activeTimeframe, chartUCode])
 
@@ -954,20 +956,20 @@ function GoldMarketModule() {
   }, [activeTimeframe, fetchTimeIncremental])
 
   useEffect(() => {
-    if (activeTimeframe !== 'day') {
+    if (!isDateKlineTimeframe(activeTimeframe)) {
       return undefined
     }
 
     const timerId = setInterval(() => {
       if (!document.hidden) {
-        void fetchDayIncremental()
+        void fetchDateKlineIncremental()
       }
     }, DAY_INCREMENT_INTERVAL_MS)
 
     return () => {
       clearInterval(timerId)
     }
-  }, [activeTimeframe, fetchDayIncremental])
+  }, [activeTimeframe, fetchDateKlineIncremental])
 
   useEffect(() => {
     if (!isMinKlineTimeframe(activeTimeframe)) {
@@ -1058,7 +1060,9 @@ function GoldMarketModule() {
     () =>
       createCandlestickGeometry(
         klineDisplayRows,
-        activeTimeframe === 'day' ? DAY_KLINE_VISIBLE_LIMIT : MIN_KLINE_VISIBLE_LIMIT,
+        isDateKlineTimeframe(activeTimeframe)
+          ? DAY_KLINE_VISIBLE_LIMIT
+          : MIN_KLINE_VISIBLE_LIMIT,
       ),
     [activeTimeframe, klineDisplayRows],
   )
@@ -1077,7 +1081,7 @@ function GoldMarketModule() {
       ]
     }
 
-    if (activeTimeframe === 'day') {
+    if (isDateKlineTimeframe(activeTimeframe)) {
       return ['较早', '中段', '最新']
     }
 
