@@ -10,24 +10,25 @@ import {
 import SentimentGauge from './SentimentGauge'
 
 const RTJ_CODE_MEANING_MAP = {
+  'Ag(T+D)': '白银T+D',
   'Au(T+D)': '黄金T+D',
   'mAu(T+D)': '迷你黄金T+D',
   'Au99.99': '黄金9999',
-  'Ag(T+D)': '白银T+D',
-  'Pt99.95': '铂金9995',
+  USDCNH: '美元/人民币汇率',
   GLNC: '伦敦金',
   SLNC: '伦敦银',
   PLNC: '伦敦铂',
   PANC: '伦敦钯',
   XAU: '国际现货黄金',
   XAG: '国际现货白银',
-  XAP: '国际现货铂金',
   XPD: '国际现货钯金',
-  USDCNH: '美元/人民币',
-  JZJ_au_PB: '黄金回购价',
-  JZJ_au_PS: '黄金销售价',
+  XAP: '国际现货铂金',
+  'Pt99.95': '铂金9995',
+  RH: '铑金',
   JZJ_ag_PB: '白银回购价',
   JZJ_ag_PS: '白银销售价',
+  JZJ_au_PB: '黄金回购价',
+  JZJ_au_PS: '黄金销售价',
   JZJ_pt_PB: '铂金回购价',
   JZJ_pt_PS: '铂金销售价',
   JZJ_pd_PB: '钯金回购价',
@@ -36,9 +37,8 @@ const RTJ_CODE_MEANING_MAP = {
   JZJ_IR_PS: '铱销售价',
   JZJ_RU_PB: '钌回购价',
   JZJ_RU_PS: '钌销售价',
-  RH: '铑',
-  RH_JZL_PB: '金砖回购价',
-  RH_JZL_PS: '金砖销售价',
+  RH_JZL_PB: '铑回购价',
+  RH_JZL_PS: '铑销售价',
 }
 
 const RTJ_STANDARD_FIELDS = new Set([
@@ -493,7 +493,7 @@ function BoardSection({
               columns={rtjColumns}
               dataSource={rtjRows}
               pagination={false}
-              scroll={{ x: 1240 + extraRtjFields.length * 140 }}
+              scroll={{ x: 1240 + extraRtjFields.length * 140, y: 420 }}
               locale={{
                 emptyText: '暂无 RTJ 行情数据',
               }}
