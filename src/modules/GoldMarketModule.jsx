@@ -27,10 +27,14 @@ import {
   TIMEFRAME_LABEL_MAP,
   TIME_INCREMENT_BATCH_SIZE,
   TIME_INCREMENT_INTERVAL_MS,
+  DAY_KLINE_VISIBLE_LIMIT,
+  MIN_KLINE_VISIBLE_LIMIT,
+  buildFallbackCandles,
   buildFallbackSeries,
   buildRequestDate,
   buildRequestDateTime,
   createChartGeometry,
+  createCandlestickGeometry,
   createDataChartGeometry,
   formatDateForApi,
   getStatusMeta,
@@ -85,6 +89,7 @@ function GoldMarketModule() {
   const [chartError, setChartError] = useState('')
   const [chartSeries, setChartSeries] = useState([])
   const [chartLabels, setChartLabels] = useState([])
+  const [chartRows, setChartRows] = useState([])
   const [externalQuoteMap, setExternalQuoteMap] = useState({})
   const [wsPrimaryKey, setWsPrimaryKey] = useState(DEFAULT_PRIMARY_WS_KEY)
   const [timeframe, setTimeframe] = useState('time')
@@ -244,6 +249,7 @@ function GoldMarketModule() {
     setTicks([])
     setChartSeries([])
     setChartLabels([])
+    setChartRows([])
     setSnapshotError('')
     setChartError('')
     timeSeriesRowsRef.current = []
@@ -602,16 +608,18 @@ function GoldMarketModule() {
                 return
               }
 
+              const normalizedRows = normalizeChartRows(rows)
+
               if (activeTimeframe === 'time') {
-                timeSeriesRowsRef.current = normalizeChartRows(rows)
+                timeSeriesRowsRef.current = normalizedRows
                 daySeriesRowsRef.current = []
                 minKlineSeriesRowsRef.current = []
               } else if (activeTimeframe === 'day') {
-                daySeriesRowsRef.current = normalizeChartRows(rows)
+                daySeriesRowsRef.current = normalizedRows
                 timeSeriesRowsRef.current = []
                 minKlineSeriesRowsRef.current = []
               } else if (isMinKlineTimeframe(activeTimeframe)) {
-                minKlineSeriesRowsRef.current = normalizeChartRows(rows)
+                minKlineSeriesRowsRef.current = normalizedRows
                 timeSeriesRowsRef.current = []
                 daySeriesRowsRef.current = []
               } else {
@@ -622,6 +630,7 @@ function GoldMarketModule() {
 
               setChartSeries(model.series)
               setChartLabels(model.labels)
+              setChartRows(normalizedRows)
 
               if (showToast) {
                 message.success(`${timeframeLabel}图线已刷新`)
@@ -644,6 +653,7 @@ function GoldMarketModule() {
         setChartError(text)
         setChartSeries([])
         setChartLabels([])
+        setChartRows([])
 
         if (showToast) {
           message.error(text)
@@ -681,6 +691,7 @@ function GoldMarketModule() {
       timeSeriesRowsRef.current = mergedRows
       setChartSeries(model.series)
       setChartLabels(model.labels)
+      setChartRows(mergedRows)
       setChartError('')
     } catch {
       // 增量轮询失败时静默，不覆盖首屏已加载数据
@@ -712,6 +723,7 @@ function GoldMarketModule() {
       daySeriesRowsRef.current = mergedRows
       setChartSeries(model.series)
       setChartLabels(model.labels)
+      setChartRows(mergedRows)
       setChartError('')
     } catch {
       // 日K增量失败时静默，不覆盖首屏已加载数据
@@ -743,6 +755,7 @@ function GoldMarketModule() {
       minKlineSeriesRowsRef.current = mergedRows
       setChartSeries(model.series)
       setChartLabels(model.labels)
+      setChartRows(mergedRows)
       setChartError('')
     } catch {
       // 分钟K增量失败时静默，不覆盖首屏已加载数据
@@ -1023,14 +1036,44 @@ function GoldMarketModule() {
   const quoteTrendClass = getTrendClass(quoteData.changeAmount)
   const londonTrendClass = getTrendClass(quoteData.londonPercent)
   const gold9999TrendClass = getTrendClass(quoteData.gold9999Percent)
+  const isKlineChart = activeTimeframe !== 'time'
+
+  const klineDisplayRows = useMemo(() => {
+    if (!isKlineChart) {
+      return []
+    }
+
+    const parsedCandles = chartRows.filter((row) =>
+      [row?.open, row?.high, row?.low, row?.close].every((value) => Number.isFinite(value)),
+    )
+
+    if (parsedCandles.length >= 2) {
+      return parsedCandles
+    }
+
+    return buildFallbackCandles(rawSeries, chartLabels)
+  }, [chartLabels, chartRows, isKlineChart, rawSeries])
+
+  const candlestickGeometry = useMemo(
+    () =>
+      createCandlestickGeometry(
+        klineDisplayRows,
+        activeTimeframe === 'day' ? DAY_KLINE_VISIBLE_LIMIT : MIN_KLINE_VISIBLE_LIMIT,
+      ),
+    [activeTimeframe, klineDisplayRows],
+  )
 
   const chartAxisLabels = useMemo(() => {
-    if (chartLabels.length >= 3) {
-      const middleIndex = Math.floor((chartLabels.length - 1) / 2)
+    const visibleLabels = isKlineChart
+      ? candlestickGeometry.candles.map((candle) => candle.label)
+      : chartLabels
+
+    if (visibleLabels.length >= 3) {
+      const middleIndex = Math.floor((visibleLabels.length - 1) / 2)
       return [
-        chartLabels[0] || '--',
-        chartLabels[middleIndex] || '--',
-        chartLabels[chartLabels.length - 1] || '--',
+        visibleLabels[0] || '--',
+        visibleLabels[middleIndex] || '--',
+        visibleLabels[visibleLabels.length - 1] || '--',
       ]
     }
 
@@ -1039,7 +1082,7 @@ function GoldMarketModule() {
     }
 
     return ['00:00', '12:00', '23:59']
-  }, [activeTimeframe, chartLabels])
+  }, [activeTimeframe, candlestickGeometry.candles, chartLabels, isKlineChart])
 
   const chartGeometry = useMemo(
     () => createChartGeometry(displaySeries, quoteData.openPrice),
@@ -1100,6 +1143,8 @@ function GoldMarketModule() {
         onMoreTimeframeChange={handleMoreTimeframeChange}
         chartLoading={chartLoading}
         chartGeometry={chartGeometry}
+        candlestickGeometry={candlestickGeometry}
+        isKlineChart={isKlineChart}
         chartMetrics={chartMetrics}
         chartAxisLabels={chartAxisLabels}
         goldSkuOptions={GOLD_SKU_OPTIONS}

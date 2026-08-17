@@ -10,6 +10,10 @@ export const CHART_WIDTH = 680
 export const CHART_HEIGHT = 300
 export const CHART_PADDING_X = 10
 export const CHART_PADDING_Y = 12
+export const KLINE_CHART_PADDING_X = 18
+export const KLINE_CHART_PADDING_Y = 20
+export const DAY_KLINE_VISIBLE_LIMIT = 30
+export const MIN_KLINE_VISIBLE_LIMIT = 48
 export const DATA_CHART_WIDTH = 660
 export const DATA_CHART_HEIGHT = 230
 export const DATA_CHART_PADDING_X = 10
@@ -477,35 +481,60 @@ export const parseKlineRows = (payload, timeframe) => {
   return rows
     .map((row, index) => {
       if (Array.isArray(row)) {
-        const price = toNumber(row[5] ?? row[2] ?? row[1])
         const rawTime = row[0]
+        const close = toNumber(row[5] ?? row[2] ?? row[1])
+        const open = toNumber(row[2]) ?? close
+        const sourceHigh = toNumber(row[3])
+        const sourceLow = toNumber(row[4])
 
-        if (price === null) {
+        if (close === null || open === null) {
           return null
         }
+
+        const high = Math.max(sourceHigh ?? open, open, close)
+        const low = Math.min(sourceLow ?? open, open, close)
 
         return {
           id: `${index}-${rawTime || 'kline-row'}`,
           timestamp: toTimestamp(rawTime),
           label: formatAxisLabel(rawTime, timeframe),
-          price: Number(price.toFixed(2)),
+          price: Number(close.toFixed(2)),
+          open: Number(open.toFixed(2)),
+          high: Number(high.toFixed(2)),
+          low: Number(low.toFixed(2)),
+          close: Number(close.toFixed(2)),
         }
       }
 
-      const price = toNumber(
+      const close = toNumber(
         pickFirst(row, ['closePrice', 'close', 'lastPrice', 'latestPrice', 'newPrice']),
+      )
+      const open =
+        toNumber(pickFirst(row, ['openPrice', 'open', 'openingPrice'])) ?? close
+      const sourceHigh = toNumber(
+        pickFirst(row, ['highPrice', 'high', 'highestPrice', 'maxPrice']),
+      )
+      const sourceLow = toNumber(
+        pickFirst(row, ['lowPrice', 'low', 'lowestPrice', 'minPrice']),
       )
       const rawTime = pickFirst(row, ['tradeDateTime', 'viewDateTime', 'dateTime', 'date', 'time'])
 
-      if (price === null) {
+      if (close === null || open === null) {
         return null
       }
+
+      const high = Math.max(sourceHigh ?? open, open, close)
+      const low = Math.min(sourceLow ?? open, open, close)
 
       return {
         id: `${index}-${rawTime || 'kline-object'}`,
         timestamp: toTimestamp(rawTime),
         label: formatAxisLabel(rawTime, timeframe),
-        price: Number(price.toFixed(2)),
+        price: Number(close.toFixed(2)),
+        open: Number(open.toFixed(2)),
+        high: Number(high.toFixed(2)),
+        low: Number(low.toFixed(2)),
+        close: Number(close.toFixed(2)),
       }
     })
     .filter(Boolean)
@@ -665,6 +694,30 @@ export const buildFallbackSeries = (basePrice, size = 120) => {
   })
 }
 
+export const buildFallbackCandles = (values, labels = []) => {
+  if (!Array.isArray(values) || !values.length) {
+    return []
+  }
+
+  return values.map((value, index) => {
+    const close = Number(value)
+    const previous = Number(values[Math.max(0, index - 1)])
+    const open = Number.isFinite(previous) ? previous : close
+    const movement = Math.max(Math.abs(close - open), Math.abs(close) * 0.0007, 0.08)
+
+    return {
+      id: `fallback-candle-${index}`,
+      timestamp: index,
+      label: labels[index] || `${index + 1}`,
+      price: close,
+      open,
+      high: Math.max(open, close) + movement * 0.55,
+      low: Math.min(open, close) - movement * 0.55,
+      close,
+    }
+  })
+}
+
 export const createChartGeometry = (values, referencePrice) => {
   const safeValues = values.length > 1 ? values : [referencePrice, referencePrice]
 
@@ -693,6 +746,102 @@ export const createChartGeometry = (values, referencePrice) => {
     referenceY,
     linePath,
     areaPath,
+  }
+}
+
+const buildKlineMarker = (candle, value, y) => {
+  const putOnLeft = candle.x > CHART_WIDTH * 0.62
+  const lineLength = 34
+  const lineX = putOnLeft ? candle.x - lineLength : candle.x + lineLength
+
+  return {
+    value,
+    x: candle.x,
+    y,
+    lineX,
+    textX: lineX + (putOnLeft ? -4 : 4),
+    textAnchor: putOnLeft ? 'end' : 'start',
+  }
+}
+
+export const createCandlestickGeometry = (rows, visibleLimit = DAY_KLINE_VISIBLE_LIMIT) => {
+  const normalizedRows = normalizeChartRows(rows)
+    .filter((row) =>
+      [row?.open, row?.high, row?.low, row?.close].every((value) => Number.isFinite(value)),
+    )
+    .slice(-visibleLimit)
+
+  if (!normalizedRows.length) {
+    return {
+      candles: [],
+      minPrice: 0,
+      maxPrice: 0,
+      axisMinPrice: 0,
+      axisMaxPrice: 0,
+      plotLeft: KLINE_CHART_PADDING_X,
+      plotRight: CHART_WIDTH - KLINE_CHART_PADDING_X,
+      plotTop: KLINE_CHART_PADDING_Y,
+      plotBottom: CHART_HEIGHT - KLINE_CHART_PADDING_Y,
+      maxMarker: null,
+      minMarker: null,
+    }
+  }
+
+  const minPrice = Math.min(...normalizedRows.map((row) => row.low))
+  const maxPrice = Math.max(...normalizedRows.map((row) => row.high))
+  const rawRange = Math.max(maxPrice - minPrice, Math.abs(maxPrice) * 0.002, 1)
+  const scaleMin = minPrice - rawRange * 0.09
+  const scaleMax = maxPrice + rawRange * 0.09
+  const scaleRange = scaleMax - scaleMin
+  const plotLeft = KLINE_CHART_PADDING_X
+  const plotRight = CHART_WIDTH - KLINE_CHART_PADDING_X
+  const plotTop = KLINE_CHART_PADDING_Y
+  const plotBottom = CHART_HEIGHT - KLINE_CHART_PADDING_Y
+  const plotWidth = plotRight - plotLeft
+  const plotHeight = plotBottom - plotTop
+  const slotWidth = plotWidth / normalizedRows.length
+  const bodyWidth = Math.max(3, Math.min(13, slotWidth * 0.56))
+  const toY = (value) => plotTop + ((scaleMax - value) / scaleRange) * plotHeight
+
+  const candles = normalizedRows.map((row, index) => {
+    const x = plotLeft + slotWidth * (index + 0.5)
+    const openY = toY(row.open)
+    const closeY = toY(row.close)
+    const isUp = row.close >= row.open
+
+    return {
+      ...row,
+      x,
+      openY,
+      closeY,
+      highY: toY(row.high),
+      lowY: toY(row.low),
+      bodyY: Math.min(openY, closeY),
+      bodyHeight: Math.max(Math.abs(closeY - openY), 1.6),
+      bodyWidth,
+      isUp,
+    }
+  })
+
+  const maxCandle = candles.reduce((best, candle) =>
+    candle.high > best.high ? candle : best,
+  )
+  const minCandle = candles.reduce((best, candle) =>
+    candle.low < best.low ? candle : best,
+  )
+
+  return {
+    candles,
+    minPrice,
+    maxPrice,
+    axisMinPrice: scaleMin,
+    axisMaxPrice: scaleMax,
+    plotLeft,
+    plotRight,
+    plotTop,
+    plotBottom,
+    maxMarker: buildKlineMarker(maxCandle, maxCandle.high, maxCandle.highY),
+    minMarker: buildKlineMarker(minCandle, minCandle.low, minCandle.lowY),
   }
 }
 
