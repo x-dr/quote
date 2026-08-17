@@ -10,25 +10,25 @@ import {
 import SentimentGauge from './SentimentGauge'
 
 const RTJ_CODE_MEANING_MAP = {
-  'Ag(T+D)': '白银T+D',
-  'Au(T+D)': '黄金T+D',
-  'mAu(T+D)': '迷你黄金T+D',
   'Au99.99': '黄金9999',
   USDCNH: '美元/人民币汇率',
+  JZJ_ag_PB: '白银回购价',
+  JZJ_au_PB: '黄金回购价',
   GLNC: '伦敦金',
   SLNC: '伦敦银',
-  PLNC: '伦敦铂',
-  PANC: '伦敦钯',
   XAU: '国际现货黄金',
   XAG: '国际现货白银',
   XPD: '国际现货钯金',
   XAP: '国际现货铂金',
   'Pt99.95': '铂金9995',
   RH: '铑金',
-  JZJ_ag_PB: '白银回购价',
+  PLNC: '伦敦铂',
+  PANC: '伦敦钯',
   JZJ_ag_PS: '白银销售价',
-  JZJ_au_PB: '黄金回购价',
   JZJ_au_PS: '黄金销售价',
+  'Ag(T+D)': '白银T+D',
+  'Au(T+D)': '黄金T+D',
+  'mAu(T+D)': '迷你黄金T+D',
   JZJ_pt_PB: '铂金回购价',
   JZJ_pt_PS: '铂金销售价',
   JZJ_pd_PB: '钯金回购价',
@@ -143,7 +143,7 @@ function BoardSection({
       title: '品种',
       dataIndex: 'code',
       key: 'code',
-      width: 140,
+      width: 120,
       fixed: 'left',
       rowScope: 'row',
       render: (value, row) => (
@@ -493,7 +493,7 @@ function BoardSection({
               columns={rtjColumns}
               dataSource={rtjRows}
               pagination={false}
-              scroll={{ x: 1240 + extraRtjFields.length * 140, y: 420 }}
+              scroll={{ x: 1220 + extraRtjFields.length * 140, y: 420 }}
               locale={{
                 emptyText: '暂无 RTJ 行情数据',
               }}
