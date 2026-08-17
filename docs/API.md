@@ -116,6 +116,7 @@ reqData={"uniqueCode":"WG-JDAU"}
 - 协议：`EventSource / text/event-stream`
 - 事件：`init`、`status`、`quote`
 - 当前消费位置：`src/modules/GoldMarketModule.jsx`
+- RTJ 页签展示快照中的全部品种，以及 `code`、`name`、`last`、`bid`、`ask`、`high`、`low`、`preClose`、`updown`、`updownRate`、`timestamp` 全部行情字段；服务端后续增加的字段也会自动追加为表格列。
 
 ## 6. 调用示例
 

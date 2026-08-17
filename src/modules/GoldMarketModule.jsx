@@ -62,15 +62,37 @@ import './GoldMarketModule.css'
 const ReserveDetailDrawer = lazy(() => import('./goldMarket/components/ReserveDetailDrawer'))
 const EtfDetailDrawer = lazy(() => import('./goldMarket/components/EtfDetailDrawer'))
 
-const GOLD_RTJ_CODES = new Set([
+const RTJ_CODE_ORDER = [
+  'Au99.99',
   'Au(T+D)',
   'mAu(T+D)',
-  'Au99.99',
-  'GLNC',
+  'Ag(T+D)',
+  'Pt99.95',
   'XAU',
-  'JZJ_au_PB',
+  'XAG',
+  'XAP',
+  'XPD',
+  'GLNC',
+  'SLNC',
+  'PLNC',
+  'PANC',
+  'USDCNH',
   'JZJ_au_PS',
-])
+  'JZJ_au_PB',
+  'JZJ_ag_PS',
+  'JZJ_ag_PB',
+  'JZJ_pt_PS',
+  'JZJ_pt_PB',
+  'JZJ_pd_PS',
+  'JZJ_pd_PB',
+  'JZJ_IR_PS',
+  'JZJ_IR_PB',
+  'JZJ_RU_PS',
+  'JZJ_RU_PB',
+  'RH',
+  'RH_JZL_PS',
+  'RH_JZL_PB',
+]
 
 function GoldMarketModule() {
   const { message } = App.useApp()
@@ -168,19 +190,8 @@ function GoldMarketModule() {
   )
   const etfAxisLabels = useMemo(() => pickAxisLabels(etfChartModel.labels), [etfChartModel.labels])
   const rtjRows = useMemo(() => {
-    const rows = Object.values(rtjQuoteMap || {}).filter((item) =>
-      GOLD_RTJ_CODES.has(String(item?.code || '')),
-    )
-    const customOrder = [
-      'Au99.99',
-      'Au(T+D)',
-      'mAu(T+D)',
-      'XAU',
-      'GLNC',
-      'JZJ_au_PS',
-      'JZJ_au_PB',
-    ]
-    const orderMap = new Map(customOrder.map((code, index) => [code, index]))
+    const rows = Object.values(rtjQuoteMap || {})
+    const orderMap = new Map(RTJ_CODE_ORDER.map((code, index) => [code, index]))
 
     const rankCode = (code) => {
       const text = String(code || '')
@@ -375,6 +386,7 @@ function GoldMarketModule() {
       }
 
       return {
+        ...source,
         id: code,
         code,
         name: String(source.name || source.code || ''),
@@ -423,7 +435,10 @@ function GoldMarketModule() {
 
       setRtjQuoteMap((previous) => ({
         ...previous,
-        [row.code]: row,
+        [row.code]: {
+          ...(previous[row.code] || {}),
+          ...row,
+        },
       }))
       setRtjConnected(true)
       setRtjUpdatedAt(toTimestampText(payload?.timestamp) || toTimestampText(row.timestamp))

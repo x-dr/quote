@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { Alert, Card, Segmented, Select, Spin, Table, Typography } from 'antd'
 import {
   BOARD_OPTIONS,
@@ -13,11 +13,48 @@ const RTJ_CODE_MEANING_MAP = {
   'Au(T+D)': '黄金T+D',
   'mAu(T+D)': '迷你黄金T+D',
   'Au99.99': '黄金9999',
+  'Ag(T+D)': '白银T+D',
+  'Pt99.95': '铂金9995',
   GLNC: '伦敦金',
+  SLNC: '伦敦银',
+  PLNC: '伦敦铂',
+  PANC: '伦敦钯',
   XAU: '国际现货黄金',
+  XAG: '国际现货白银',
+  XAP: '国际现货铂金',
+  XPD: '国际现货钯金',
+  USDCNH: '美元/人民币',
   JZJ_au_PB: '黄金回购价',
   JZJ_au_PS: '黄金销售价',
+  JZJ_ag_PB: '白银回购价',
+  JZJ_ag_PS: '白银销售价',
+  JZJ_pt_PB: '铂金回购价',
+  JZJ_pt_PS: '铂金销售价',
+  JZJ_pd_PB: '钯金回购价',
+  JZJ_pd_PS: '钯金销售价',
+  JZJ_IR_PB: '铱回购价',
+  JZJ_IR_PS: '铱销售价',
+  JZJ_RU_PB: '钌回购价',
+  JZJ_RU_PS: '钌销售价',
+  RH: '铑',
+  RH_JZL_PB: '金砖回购价',
+  RH_JZL_PS: '金砖销售价',
 }
+
+const RTJ_STANDARD_FIELDS = new Set([
+  'id',
+  'code',
+  'name',
+  'last',
+  'updown',
+  'updownRate',
+  'bid',
+  'ask',
+  'high',
+  'low',
+  'preClose',
+  'timestamp',
+])
 
 function BoardSection({
   boardTab,
@@ -60,13 +97,55 @@ function BoardSection({
     })
   }
 
+  const formatTimestamp = (value) => {
+    if (!value) {
+      return '--'
+    }
+
+    const parsed = Date.parse(String(value))
+    if (!Number.isFinite(parsed)) {
+      return String(value)
+    }
+
+    return new Date(parsed).toLocaleString('zh-CN', { hour12: false })
+  }
+
+  const formatExtraCell = (value) => {
+    if (value === null || value === undefined || value === '') {
+      return '--'
+    }
+
+    if (typeof value === 'number') {
+      return value.toLocaleString('zh-CN', { maximumFractionDigits: 6 })
+    }
+
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value)
+      } catch {
+        return String(value)
+      }
+    }
+
+    return String(value)
+  }
+
+  const extraRtjFields = useMemo(
+    () =>
+      [...new Set(rtjRows.flatMap((row) => Object.keys(row || {})))]
+        .filter((field) => !RTJ_STANDARD_FIELDS.has(field))
+        .sort((left, right) => left.localeCompare(right, 'en')),
+    [rtjRows],
+  )
+
   const rtjColumns = [
     {
       title: '品种',
       dataIndex: 'code',
       key: 'code',
-      width: 120,
+      width: 140,
       fixed: 'left',
+      rowScope: 'row',
       render: (value, row) => (
         <div className="rtj-name-cell">
           <strong>{RTJ_CODE_MEANING_MAP[value] || row.name || value || '--'}</strong>
@@ -150,6 +229,20 @@ function BoardSection({
       width: 100,
       render: (value) => formatCell(value, 3),
     },
+    {
+      title: '行情时间',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      width: 176,
+      render: formatTimestamp,
+    },
+    ...extraRtjFields.map((field) => ({
+      title: field,
+      dataIndex: field,
+      key: field,
+      width: 140,
+      render: formatExtraCell,
+    })),
   ]
 
   return (
@@ -381,9 +474,9 @@ function BoardSection({
           <Card className="data-panel-card" variant="borderless">
             <div className="rtj-table-head">
               <Typography.Title level={5} className="rtj-table-title">
-                RTJ 实时行情
+                RTJ 实时行情（{rtjRows.length} 个品种）
               </Typography.Title>
-              <div className="rtj-meta">
+              <div className="rtj-meta" aria-live="polite">
                 <span className={`rtj-status ${rtjConnected ? 'online' : 'offline'}`}>
                   {rtjConnected ? '已连接' : '已断开'}
                 </span>
@@ -400,7 +493,7 @@ function BoardSection({
               columns={rtjColumns}
               dataSource={rtjRows}
               pagination={false}
-              scroll={{ x: 1050, y: 320 }}
+              scroll={{ x: 1240 + extraRtjFields.length * 140 }}
               locale={{
                 emptyText: '暂无 RTJ 行情数据',
               }}
